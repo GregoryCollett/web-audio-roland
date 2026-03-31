@@ -8,10 +8,8 @@ import { INSTRUMENT_IDS, NUM_STEPS, TUNABLE_INSTRUMENTS } from './types';
 function patternPreset(
   id: string,
   name: string,
-  bpm: number,
   active: Partial<Record<InstrumentId, number[]>>,
   accentSteps: number[] = [],
-  shuffle = 0,
 ): PatternPreset {
   const steps = {} as Record<InstrumentId, boolean[]>;
   for (const inst of INSTRUMENT_IDS) {
@@ -29,7 +27,7 @@ function patternPreset(
   for (const i of accentSteps) {
     accents[i] = true;
   }
-  return { id, name, builtIn: true, bpm, shuffle, steps, accents };
+  return { id, name, builtIn: true, steps, accents };
 }
 
 function kitPreset(
@@ -61,7 +59,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-four-on-the-floor',
     'Four on the Floor',
-    124,
     {
       kick:      [0, 4, 8, 12],
       clap:      [4, 12],
@@ -69,13 +66,11 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       openHat:   [2, 6, 10, 14],
     },
     [0, 4, 8, 12],
-    0.15, // subtle shuffle for groove
   ),
 
   patternPreset(
     'builtin-techno-drive',
     'Techno Drive',
-    130,
     {
       kick:      [0, 2, 4, 6, 8, 10, 12, 14],
       rimshot:   [3, 11],
@@ -88,7 +83,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-boom-bap',
     'Boom Bap',
-    90,
     {
       kick:      [0, 5],
       snare:     [4, 12],
@@ -96,13 +90,11 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       openHat:   [12],
     },
     [0, 4, 12],
-    0.55, // heavy swing for that head-nod feel
   ),
 
   patternPreset(
     'builtin-electro-funk',
     'Electro Funk',
-    115,
     {
       kick:      [0, 3, 6, 10],
       clap:      [4, 12],
@@ -110,13 +102,11 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       rimshot:   [2, 8, 14],
     },
     [0, 2, 4, 8, 12, 14],
-    0.3, // moderate funk shuffle
   ),
 
   patternPreset(
     'builtin-breakbeat',
     'Breakbeat',
-    135,
     {
       kick:      [0, 4, 9, 13],
       snare:     [4, 12],
@@ -129,7 +119,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-minimal-pulse',
     'Minimal Pulse',
-    122,
     {
       kick:      [0, 8],
       clap:      [12],
@@ -141,7 +130,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-latin-percussion',
     'Latin Percussion',
-    110,
     {
       rimshot:   [0, 3, 6, 10, 12],
       lowTom:    [4, 14],
@@ -157,7 +145,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-acid-house',
     'Acid House',
-    126,
     {
       kick:      [0, 4, 8, 12],
       closedHat: ALL_STEPS,
@@ -171,7 +158,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-detroit-techno',
     'Detroit Techno',
-    128,
     {
       kick:      [0, 4, 8, 12],
       clap:      [4, 12],
@@ -185,7 +171,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-chicago-jack',
     'Chicago Jack',
-    122,
     {
       kick:      [0, 2, 4, 6, 8, 10, 12, 14],
       clap:      [4, 12],
@@ -197,7 +182,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-garage-2step',
     'Garage 2-Step',
-    132,
     {
       kick:      [0, 7, 10],
       snare:     [4, 12],
@@ -205,13 +189,11 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       openHat:   [3, 11],
     },
     [0, 4, 12],
-    0.4, // garage shuffle
   ),
 
   patternPreset(
     'builtin-industrial',
     'Industrial',
-    140,
     {
       kick:      [0, 3, 4, 8, 11, 12],
       snare:     [4, 12],
@@ -225,7 +207,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-reggaeton',
     'Reggaeton',
-    95,
     {
       kick:      [0, 3, 4, 7, 8, 11, 12, 15],
       snare:     [3, 7, 11, 15],
@@ -238,7 +219,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-synth-pop',
     'Synth Pop',
-    118,
     {
       kick:      [0, 8],
       snare:     [4, 12],
@@ -252,7 +232,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-half-time',
     'Half Time',
-    140,
     {
       kick:      [0, 10],
       snare:     [8],
@@ -266,7 +245,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-tom-fill',
     'Tom Fill',
-    120,
     {
       kick:      [0, 8],
       snare:     [4, 12],
@@ -281,7 +259,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-disco',
     'Disco',
-    116,
     {
       kick:      [0, 4, 8, 12],
       openHat:   [2, 6, 10, 14],
@@ -290,13 +267,11 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       lowTom:    [14, 15],
     },
     [0, 4, 8, 12],
-    0.2, // light disco shuffle
   ),
 
   patternPreset(
     'builtin-trap-808',
     'Trap 808',
-    72,
     {
       kick:      [0, 7, 12],
       snare:     [4, 12],
@@ -305,13 +280,11 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       clap:      [4],
     },
     [0, 4, 12],
-    0.35, // trap swing
   ),
 
   patternPreset(
     'builtin-new-wave',
     'New Wave',
-    108,
     {
       kick:      [0, 6, 8, 14],
       rimshot:   [4, 12],
@@ -325,7 +298,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
   patternPreset(
     'builtin-afrobeat',
     'Afrobeat',
-    112,
     {
       kick:      [0, 5, 8, 13],
       snare:     [4, 12],
@@ -334,7 +306,6 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       rimshot:   [2, 6, 10, 14],
     },
     [0, 4, 8, 12],
-    0.25, // subtle afrobeat swing
   ),
 ];
 

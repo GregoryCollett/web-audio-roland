@@ -12,8 +12,6 @@ function makePatternPreset(id: string, name: string): PatternPreset {
     id,
     name,
     builtIn: false,
-    bpm: 120,
-    shuffle: 0,
     steps: createDefaultSteps(),
     accents: new Array(16).fill(false),
   };
