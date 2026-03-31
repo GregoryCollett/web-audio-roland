@@ -1,38 +1,30 @@
 import { useCallback, useRef } from 'react';
 import { useMixer, mixer } from '../hooks/useTransport';
+import type { ChannelState } from '../engine/MixerEngine';
 
-interface ChannelFaderProps {
-  label: string;
-  volume: number;
-  pan?: number;
-  mute?: boolean;
-  solo?: boolean;
-  dimmed?: boolean;
-  isMaster?: boolean;
-  onVolume: (v: number) => void;
-  onPan?: (v: number) => void;
-  onMute?: () => void;
-  onSolo?: () => void;
+// --- Fader: the reusable drag-to-set-value vertical bar ---
+
+interface FaderProps {
+  value: number;
+  onChange: (v: number) => void;
+  className?: string;
 }
 
-function ChannelFader({
-  label, volume, pan, mute, solo, dimmed, isMaster,
-  onVolume, onPan, onMute, onSolo,
-}: ChannelFaderProps) {
+function Fader({ value, onChange, className }: FaderProps) {
   const dragging = useRef(false);
   const startY = useRef(0);
   const startValue = useRef(0);
 
-  const handleVolumeDown = useCallback(
+  const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       dragging.current = true;
       startY.current = e.clientY;
-      startValue.current = volume;
+      startValue.current = value;
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!dragging.current) return;
         const delta = (startY.current - e.clientY) / 150;
-        onVolume(Math.max(0, Math.min(1, startValue.current + delta)));
+        onChange(Math.max(0, Math.min(1, startValue.current + delta)));
       };
 
       const handleMouseUp = () => {
@@ -44,20 +36,35 @@ function ChannelFader({
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     },
-    [volume, onVolume],
+    [value, onChange],
   );
+
+  return (
+    <div className={`mixer__fader-track${className ? ` ${className}` : ''}`} onMouseDown={handleMouseDown}>
+      <div className="mixer__fader-fill" style={{ height: `${value * 100}%` }} />
+    </div>
+  );
+}
+
+// --- Channel: label + fader + pan + mute/solo ---
+
+function Channel({ index, channel }: { index: number; channel: ChannelState }) {
+  const panDisplay = channel.pan === 0 ? 'C' : channel.pan < 0 ? `L${Math.round(Math.abs(channel.pan) * 100)}` : `R${Math.round(channel.pan * 100)}`;
+
+  const dragging = useRef(false);
+  const startY = useRef(0);
+  const startValue = useRef(0);
 
   const handlePanDown = useCallback(
     (e: React.MouseEvent) => {
-      if (!onPan || pan === undefined) return;
       dragging.current = true;
       startY.current = e.clientY;
-      startValue.current = pan;
+      startValue.current = channel.pan;
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!dragging.current) return;
         const delta = (startY.current - e.clientY) / 100;
-        onPan(Math.max(-1, Math.min(1, startValue.current + delta)));
+        mixer.setChannelPan(index, Math.max(-1, Math.min(1, startValue.current + delta)));
       };
 
       const handleMouseUp = () => {
@@ -69,49 +76,36 @@ function ChannelFader({
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     },
-    [pan, onPan],
+    [index, channel.pan],
   );
 
-  const panDisplay = pan === undefined ? '' : pan === 0 ? 'C' : pan < 0 ? `L${Math.round(Math.abs(pan) * 100)}` : `R${Math.round(pan * 100)}`;
-
   return (
-    <div className={`mixer__channel${dimmed ? ' mixer__channel--empty' : ''}${isMaster ? ' mixer__master-channel' : ''}`}>
-      <span className="mixer__channel-label">{label}</span>
-
-      <div className="mixer__fader-track" onMouseDown={handleVolumeDown}>
-        <div className="mixer__fader-fill" style={{ height: `${volume * 100}%` }} />
+    <div className={`mixer__channel${channel.connected ? '' : ' mixer__channel--empty'}`}>
+      <span className="mixer__channel-label">{channel.label}</span>
+      <Fader value={channel.volume} onChange={(v) => mixer.setChannelVolume(index, v)} />
+      <span className="mixer__channel-db">{channel.mute ? '-\u221E' : `${Math.round(channel.volume * 100)}%`}</span>
+      <div className="mixer__pan-knob" onMouseDown={handlePanDown} title={`Pan: ${panDisplay}`}>
+        <span className="mixer__pan-label">{panDisplay}</span>
       </div>
-      <span className="mixer__channel-db">{mute ? '-\u221E' : `${Math.round(volume * 100)}%`}</span>
-
-      {onPan && (
-        <div className="mixer__pan-knob" onMouseDown={handlePanDown} title={`Pan: ${panDisplay}`}>
-          <span className="mixer__pan-label">{panDisplay}</span>
-        </div>
-      )}
-
-      {(onMute || onSolo) && (
-        <div className="mixer__channel-btns">
-          {onMute && (
-            <button
-              className={`mixer__btn mixer__btn--mute${mute ? ' mixer__btn--active' : ''}`}
-              onClick={onMute}
-            >
-              M
-            </button>
-          )}
-          {onSolo && (
-            <button
-              className={`mixer__btn mixer__btn--solo${solo ? ' mixer__btn--active' : ''}`}
-              onClick={onSolo}
-            >
-              S
-            </button>
-          )}
-        </div>
-      )}
+      <div className="mixer__channel-btns">
+        <button
+          className={`mixer__btn mixer__btn--mute${channel.mute ? ' mixer__btn--active' : ''}`}
+          onClick={() => mixer.toggleChannelMute(index)}
+        >
+          M
+        </button>
+        <button
+          className={`mixer__btn mixer__btn--solo${channel.solo ? ' mixer__btn--active' : ''}`}
+          onClick={() => mixer.toggleChannelSolo(index)}
+        >
+          S
+        </button>
+      </div>
     </div>
   );
 }
+
+// --- MixerPanel ---
 
 export function MixerPanel() {
   const mixerState = useMixer();
@@ -123,26 +117,13 @@ export function MixerPanel() {
       </div>
       <div className="mixer__channels">
         {mixerState.channels.map((ch, i) => (
-          <ChannelFader
-            key={i}
-            label={ch.label}
-            volume={ch.volume}
-            pan={ch.pan}
-            mute={ch.mute}
-            solo={ch.solo}
-            dimmed={!ch.connected}
-            onVolume={(v) => mixer.setChannelVolume(i, v)}
-            onPan={(v) => mixer.setChannelPan(i, v)}
-            onMute={() => mixer.toggleChannelMute(i)}
-            onSolo={() => mixer.toggleChannelSolo(i)}
-          />
+          <Channel key={i} index={i} channel={ch} />
         ))}
-        <ChannelFader
-          label="MST"
-          volume={mixerState.masterVolume}
-          isMaster
-          onVolume={(v) => mixer.setMasterVolume(v)}
-        />
+        <div className="mixer__master-channel">
+          <span className="mixer__channel-label">MST</span>
+          <Fader value={mixerState.masterVolume} onChange={(v) => mixer.setMasterVolume(v)} />
+          <span className="mixer__channel-db">{Math.round(mixerState.masterVolume * 100)}%</span>
+        </div>
       </div>
     </div>
   );
