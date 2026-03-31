@@ -1,8 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { App } from './components/App'
+import './styles/index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <div>TR-909</div>
+    <App />
   </StrictMode>,
 )
