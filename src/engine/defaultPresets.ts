@@ -1,12 +1,5 @@
-import {
-  PatternPreset,
-  KitPreset,
-  InstrumentId,
-  INSTRUMENT_IDS,
-  NUM_STEPS,
-  TUNABLE_INSTRUMENTS,
-  InstrumentParams,
-} from './types';
+import type { PatternPreset, KitPreset, InstrumentId, InstrumentParams } from './types';
+import { INSTRUMENT_IDS, NUM_STEPS, TUNABLE_INSTRUMENTS } from './types';
 
 // ---------------------------------------------------------------------------
 // Helpers
