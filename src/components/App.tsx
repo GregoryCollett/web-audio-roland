@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { InstrumentId } from '../engine/types';
 import { usePresets, engine } from '../hooks/useEngine';
+import { useKeyboard } from '../hooks/useKeyboard';
 import { InitOverlay } from './InitOverlay';
 import { Transport } from './Transport';
 import { PresetSelector } from './PresetSelector';
@@ -14,7 +15,15 @@ import { MasterSection } from './MasterSection';
 export function App() {
   const [initialized, setInitialized] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId>('kick');
+  const [selectedStep, setSelectedStep] = useState(0);
   const presets = usePresets();
+
+  useKeyboard({
+    selectedInstrument,
+    setSelectedInstrument,
+    selectedStep,
+    setSelectedStep,
+  });
 
   return (
     <>
@@ -44,8 +53,8 @@ export function App() {
           onSelect={setSelectedInstrument}
         />
         <ParamKnobs instrument={selectedInstrument} />
-        <StepGrid instrument={selectedInstrument} />
-        <AccentRow />
+        <StepGrid instrument={selectedInstrument} selectedStep={selectedStep} />
+        <AccentRow selectedStep={selectedStep} />
         <Playhead />
       </div>
       <MasterSection />

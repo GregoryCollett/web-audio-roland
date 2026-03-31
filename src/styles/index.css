@@ -299,6 +299,11 @@ body {
   background: var(--border);
 }
 
+.step-btn--selected {
+  outline: 2px solid var(--text-primary);
+  outline-offset: -2px;
+}
+
 /* Accent Row */
 .accent-row {
   margin-bottom: 8px;
@@ -346,6 +351,11 @@ body {
 
 .accent-btn--inactive:hover {
   background: var(--border);
+}
+
+.accent-btn--selected {
+  outline: 2px solid var(--text-primary);
+  outline-offset: -2px;
 }
 
 /* Playhead */

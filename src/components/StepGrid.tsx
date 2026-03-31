@@ -24,9 +24,10 @@ const DISPLAY_NAMES: Record<InstrumentId, string> = {
 
 interface StepGridProps {
   instrument: InstrumentId;
+  selectedStep?: number;
 }
 
-export function StepGrid({ instrument }: StepGridProps) {
+export function StepGrid({ instrument, selectedStep }: StepGridProps) {
   const pattern = usePattern();
   const steps = pattern.steps[instrument];
 
@@ -41,7 +42,7 @@ export function StepGrid({ instrument }: StepGridProps) {
                 key={step}
                 className={`step-btn ${
                   steps[step] ? 'step-btn--active' : 'step-btn--inactive'
-                }`}
+                }${step === selectedStep ? ' step-btn--selected' : ''}`}
                 onClick={() => engine.toggleStep(instrument, step)}
               >
                 {step + 1}

@@ -7,7 +7,11 @@ const GROUPS = [
   [12, 13, 14, 15],
 ];
 
-export function AccentRow() {
+interface AccentRowProps {
+  selectedStep?: number;
+}
+
+export function AccentRow({ selectedStep }: AccentRowProps) {
   const pattern = usePattern();
 
   return (
@@ -21,7 +25,7 @@ export function AccentRow() {
                 key={step}
                 className={`accent-btn ${
                   pattern.accents[step] ? 'accent-btn--active' : 'accent-btn--inactive'
-                }`}
+                }${step === selectedStep ? ' accent-btn--selected' : ''}`}
                 onClick={() => engine.toggleAccent(step)}
               />
             ))}
