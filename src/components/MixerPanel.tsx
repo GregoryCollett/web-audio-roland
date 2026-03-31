@@ -95,6 +95,47 @@ function ChannelFader({ index, channel }: { index: number; channel: ChannelState
   );
 }
 
+function MasterFader({ volume }: { volume: number }) {
+  const dragging = useRef(false);
+  const startY = useRef(0);
+  const startValue = useRef(0);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      dragging.current = true;
+      startY.current = e.clientY;
+      startValue.current = volume;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!dragging.current) return;
+        const delta = (startY.current - e.clientY) / 150;
+        const newValue = Math.max(0, Math.min(1, startValue.current + delta));
+        mixer.setMasterVolume(newValue);
+      };
+
+      const handleMouseUp = () => {
+        dragging.current = false;
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    },
+    [volume],
+  );
+
+  return (
+    <div className="mixer__master-channel">
+      <span className="mixer__channel-label">MST</span>
+      <div className="mixer__fader-track" onMouseDown={handleMouseDown}>
+        <div className="mixer__fader-fill" style={{ height: `${volume * 100}%` }} />
+      </div>
+      <span className="mixer__channel-db">{Math.round(volume * 100)}%</span>
+    </div>
+  );
+}
+
 export function MixerPanel() {
   const mixerState = useMixer();
 
@@ -107,13 +148,7 @@ export function MixerPanel() {
         {mixerState.channels.map((ch, i) => (
           <ChannelFader key={i} index={i} channel={ch} />
         ))}
-        <div className="mixer__master-channel">
-          <span className="mixer__channel-label">MST</span>
-          <div className="mixer__fader-track">
-            <div className="mixer__fader-fill" style={{ height: `${mixerState.masterVolume * 100}%` }} />
-          </div>
-          <span className="mixer__channel-db">{Math.round(mixerState.masterVolume * 100)}%</span>
-        </div>
+        <MasterFader volume={mixerState.masterVolume} />
       </div>
     </div>
   );
