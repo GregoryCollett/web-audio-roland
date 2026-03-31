@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import type { InstrumentId } from '../engine/types';
-import { useDrumPresets, drumEngine } from '../hooks/useDrum';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { InitOverlay } from './InitOverlay';
 import { Transport } from './Transport';
-import { PresetSelector } from './PresetSelector';
+import { DrumHeader } from './DrumHeader';
 import { InstrumentSelector } from './InstrumentSelector';
 import { ParamKnobs } from './ParamKnobs';
 import { StepGrid } from './StepGrid';
@@ -19,7 +18,6 @@ export function App() {
   const [selectedStep, setSelectedStep] = useState(0);
   const [bassSelectedStep, setBassSelectedStep] = useState(0);
   const [focusPanel, setFocusPanel] = useState<'drum' | 'bass'>('drum');
-  const presets = useDrumPresets();
 
   useKeyboard({
     selectedInstrument,
@@ -40,28 +38,7 @@ export function App() {
         className={`tr909${focusPanel === 'drum' ? ' tr909--focused' : ''}`}
         onClick={() => setFocusPanel('drum')}
       >
-        <div className="tr909__header">
-          <span className="tr909__title">TR-909</span>
-          <span className="tr909__subtitle">RHYTHM COMPOSER</span>
-        </div>
-        <div className="preset-row">
-          <PresetSelector
-            label="Pattern"
-            presets={presets.patterns}
-            activeId={presets.activePatternId}
-            onLoad={(id) => drumEngine.loadPatternPreset(id)}
-            onSave={(name) => drumEngine.savePatternPreset(name)}
-            onDelete={(id) => drumEngine.deletePatternPreset(id)}
-          />
-          <PresetSelector
-            label="Kit"
-            presets={presets.kits}
-            activeId={presets.activeKitId}
-            onLoad={(id) => drumEngine.loadKitPreset(id)}
-            onSave={(name) => drumEngine.saveKitPreset(name)}
-            onDelete={(id) => drumEngine.deleteKitPreset(id)}
-          />
-        </div>
+        <DrumHeader />
         <InstrumentSelector
           selected={selectedInstrument}
           onSelect={setSelectedInstrument}
