@@ -1,0 +1,210 @@
+import { Clock } from './clock';
+
+export interface MasterParams {
+  volume: number;
+  compressor: boolean;
+  threshold: number;
+  ratio: number;
+  knee: number;
+  attack: number;
+  release: number;
+}
+
+export interface TransportSnapshot {
+  playing: boolean;
+  bpm: number;
+  shuffle: number;
+  currentStep: number;
+  master: MasterParams;
+}
+
+type TickCallback = (ctx: AudioContext, dest: AudioNode, time: number, step: number) => void;
+
+const DEFAULT_MASTER: MasterParams = {
+  volume: 0.8,
+  compressor: true,
+  threshold: -18,
+  ratio: 4,
+  knee: 8,
+  attack: 0.005,
+  release: 0.15,
+};
+
+export class TransportManager {
+  private ctx: AudioContext | null = null;
+  private clock: Clock;
+  private listeners = new Set<() => void>();
+  private snapshot: TransportSnapshot;
+
+  // Master chain nodes — created on init()
+  private compressorNode: DynamicsCompressorNode | null = null;
+  private masterGain: GainNode | null = null;
+  private _outputNode: AudioNode | null = null; // where voices connect to
+
+  // Registered tick callbacks
+  private tickCallbacks = new Set<TickCallback>();
+
+  constructor() {
+    this.snapshot = {
+      playing: false,
+      bpm: 120,
+      shuffle: 0,
+      currentStep: 0,
+      master: { ...DEFAULT_MASTER },
+    };
+
+    this.clock = new Clock((time, step) => this.onTick(time, step));
+  }
+
+  // --- Subscription API (useSyncExternalStore pattern) ---
+
+  subscribe = (callback: () => void): (() => void) => {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  };
+
+  getSnapshot = (): TransportSnapshot => {
+    return this.snapshot;
+  };
+
+  // --- Tick Callback Registration ---
+
+  registerTickCallback(cb: TickCallback): () => void {
+    this.tickCallbacks.add(cb);
+    return () => this.tickCallbacks.delete(cb);
+  }
+
+  // --- Accessors ---
+
+  getAudioContext(): AudioContext | null {
+    return this.ctx;
+  }
+
+  getOutputNode(): AudioNode | null {
+    return this._outputNode;
+  }
+
+  // --- Lifecycle ---
+
+  async init(): Promise<void> {
+    if (this.ctx) return;
+    this.ctx = new AudioContext();
+    if (this.ctx.state === 'suspended') {
+      await this.ctx.resume();
+    }
+
+    // Build master chain: voices → compressor → masterGain → destination
+    this.compressorNode = this.ctx.createDynamicsCompressor();
+    this.applyCompressorParams();
+
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = this.snapshot.master.volume;
+
+    // Wire up the chain
+    this.compressorNode.connect(this.masterGain);
+    this.masterGain.connect(this.ctx.destination);
+
+    // Voices connect to the compressor input (compressor enabled by default)
+    this._outputNode = this.compressorNode;
+  }
+
+  // --- Transport ---
+
+  play(): void {
+    if (!this.ctx || this.snapshot.playing) return;
+    this.emit({ playing: true, currentStep: 0 });
+    this.clock.start(this.ctx, this.snapshot.bpm, this.snapshot.shuffle);
+  }
+
+  stop(): void {
+    if (!this.snapshot.playing) return;
+    this.clock.stop();
+    this.emit({ playing: false, currentStep: 0 });
+  }
+
+  setBpm(bpm: number): void {
+    const clamped = Math.max(40, Math.min(300, bpm));
+    this.emit({ bpm: clamped });
+    if (this.snapshot.playing) {
+      this.clock.setBpm(clamped);
+    }
+  }
+
+  setShuffle(shuffle: number): void {
+    const clamped = Math.max(0, Math.min(1, shuffle));
+    this.emit({ shuffle: clamped });
+    if (this.snapshot.playing) {
+      this.clock.setShuffle(clamped);
+    }
+  }
+
+  // --- Master Section ---
+
+  setMasterVolume(volume: number): void {
+    const clamped = Math.max(0, Math.min(1, volume));
+    if (this.masterGain) {
+      this.masterGain.gain.value = clamped;
+    }
+    this.emit({ master: { ...this.snapshot.master, volume: clamped } });
+  }
+
+  setCompressorEnabled(enabled: boolean): void {
+    this.emit({ master: { ...this.snapshot.master, compressor: enabled } });
+    this.rewireMasterChain();
+  }
+
+  setCompressorParam(
+    param: 'threshold' | 'ratio' | 'knee' | 'attack' | 'release',
+    value: number,
+  ): void {
+    this.emit({ master: { ...this.snapshot.master, [param]: value } });
+    this.applyCompressorParams();
+  }
+
+  // --- Clock Callback ---
+
+  private onTick(time: number, step: number): void {
+    this.emit({ currentStep: step });
+
+    if (this.ctx && this._outputNode) {
+      for (const cb of this.tickCallbacks) {
+        cb(this.ctx, this._outputNode, time, step);
+      }
+    }
+  }
+
+  // --- Internal ---
+
+  private applyCompressorParams(): void {
+    if (!this.compressorNode) return;
+    const m = this.snapshot.master;
+    this.compressorNode.threshold.value = m.threshold;
+    this.compressorNode.ratio.value = m.ratio;
+    this.compressorNode.knee.value = m.knee;
+    this.compressorNode.attack.value = m.attack;
+    this.compressorNode.release.value = m.release;
+  }
+
+  private rewireMasterChain(): void {
+    if (!this.ctx || !this.compressorNode || !this.masterGain) return;
+
+    // Disconnect compressor from its current destination
+    this.compressorNode.disconnect();
+
+    if (this.snapshot.master.compressor) {
+      // voices → compressor → masterGain → destination
+      this.compressorNode.connect(this.masterGain);
+      this._outputNode = this.compressorNode;
+    } else {
+      // voices → masterGain → destination (bypass compressor)
+      this._outputNode = this.masterGain;
+    }
+  }
+
+  private emit(partial: Partial<TransportSnapshot>): void {
+    this.snapshot = { ...this.snapshot, ...partial };
+    for (const listener of this.listeners) {
+      listener();
+    }
+  }
+}
