@@ -1,0 +1,145 @@
+import {
+  type InstrumentId,
+  type EngineSnapshot,
+  INSTRUMENT_IDS,
+  NUM_STEPS,
+  createDefaultSteps,
+  createDefaultInstruments,
+} from './types';
+import { Clock } from './clock';
+import { voices, openHat as openHatVoice } from './voices';
+
+export class AudioEngine {
+  private ctx: AudioContext | null = null;
+  private clock: Clock;
+  private listeners = new Set<() => void>();
+  private snapshot: EngineSnapshot;
+  private openHatGain: GainNode | null = null;
+
+  constructor() {
+    this.snapshot = {
+      transport: {
+        playing: false,
+        bpm: 120,
+        currentStep: 0,
+      },
+      pattern: {
+        steps: createDefaultSteps(),
+        accents: new Array(NUM_STEPS).fill(false),
+      },
+      instruments: createDefaultInstruments(),
+    };
+
+    this.clock = new Clock((time, step) => this.onTick(time, step));
+  }
+
+  subscribe = (callback: () => void): (() => void) => {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  };
+
+  getSnapshot = (): EngineSnapshot => {
+    return this.snapshot;
+  };
+
+  async init(): Promise<void> {
+    if (this.ctx) return;
+    this.ctx = new AudioContext();
+    if (this.ctx.state === 'suspended') {
+      await this.ctx.resume();
+    }
+  }
+
+  play(): void {
+    if (!this.ctx || this.snapshot.transport.playing) return;
+    this.emit({
+      transport: { ...this.snapshot.transport, playing: true, currentStep: 0 },
+    });
+    this.clock.start(this.ctx, this.snapshot.transport.bpm);
+  }
+
+  stop(): void {
+    if (!this.snapshot.transport.playing) return;
+    this.clock.stop();
+    this.emit({
+      transport: { ...this.snapshot.transport, playing: false, currentStep: 0 },
+    });
+  }
+
+  setBpm(bpm: number): void {
+    const clamped = Math.max(40, Math.min(300, bpm));
+    this.emit({
+      transport: { ...this.snapshot.transport, bpm: clamped },
+    });
+    if (this.snapshot.transport.playing) {
+      this.clock.setBpm(clamped);
+    }
+  }
+
+  toggleStep(instrument: InstrumentId, step: number): void {
+    const currentSteps = this.snapshot.pattern.steps[instrument];
+    const newSteps = [...currentSteps];
+    newSteps[step] = !newSteps[step];
+
+    this.emit({
+      pattern: {
+        ...this.snapshot.pattern,
+        steps: { ...this.snapshot.pattern.steps, [instrument]: newSteps },
+      },
+    });
+  }
+
+  toggleAccent(step: number): void {
+    const newAccents = [...this.snapshot.pattern.accents];
+    newAccents[step] = !newAccents[step];
+    this.emit({
+      pattern: { ...this.snapshot.pattern, accents: newAccents },
+    });
+  }
+
+  setParam(instrument: InstrumentId, param: string, value: number): void {
+    const current = this.snapshot.instruments[instrument];
+    this.emit({
+      instruments: {
+        ...this.snapshot.instruments,
+        [instrument]: { ...current, [param]: value },
+      },
+    });
+  }
+
+  private onTick(time: number, step: number): void {
+    if (this.ctx) {
+      const accent = this.snapshot.pattern.accents[step];
+      for (const id of INSTRUMENT_IDS) {
+        if (this.snapshot.pattern.steps[id][step]) {
+          const params = this.snapshot.instruments[id];
+
+          if (id === 'closedHat' && this.openHatGain) {
+            this.openHatGain.gain.cancelScheduledValues(time);
+            this.openHatGain.gain.setValueAtTime(0, time);
+            this.openHatGain = null;
+          }
+
+          if (id === 'openHat') {
+            this.openHatGain = openHatVoice(
+              this.ctx, this.ctx.destination, time, params, accent,
+            );
+          } else {
+            voices[id](this.ctx, this.ctx.destination, time, params, accent);
+          }
+        }
+      }
+    }
+
+    this.emit({
+      transport: { ...this.snapshot.transport, currentStep: step },
+    });
+  }
+
+  private emit(partial: Partial<EngineSnapshot>): void {
+    this.snapshot = { ...this.snapshot, ...partial };
+    for (const listener of this.listeners) {
+      listener();
+    }
+  }
+}
