@@ -98,6 +98,9 @@ export class TransportManager {
     await this.ctx.audioWorklet.addModule(
       new URL('./bass/diodeLadderProcessor.ts', import.meta.url)
     );
+    await this.ctx.audioWorklet.addModule(
+      new URL('./synth/ir3109Processor.ts', import.meta.url)
+    );
 
     // Build master chain: mixer master → compressor → masterGain → destination
     this.compressorNode = this.ctx.createDynamicsCompressor();
