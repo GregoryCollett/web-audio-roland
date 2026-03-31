@@ -38,3 +38,10 @@ export function useInstrumentParams(id: InstrumentId): InstrumentParams {
     return next;
   });
 }
+
+export function usePresets(): EngineSnapshot['presets'] {
+  return useSyncExternalStore(
+    engine.subscribe,
+    () => engine.getSnapshot().presets,
+  );
+}

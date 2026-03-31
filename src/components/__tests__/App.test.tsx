@@ -53,4 +53,16 @@ describe('App', () => {
     await user.click(screen.getByText('SD'));
     expect(screen.getByText('Pattern — Snare')).toBeDefined();
   });
+
+  it('renders pattern and kit preset selectors', () => {
+    render(<App />);
+    expect(screen.getByText('Pattern')).toBeDefined();
+    expect(screen.getByText('Kit')).toBeDefined();
+  });
+
+  it('shows Custom as default preset name', () => {
+    render(<App />);
+    const customLabels = screen.getAllByText('Custom');
+    expect(customLabels.length).toBe(2);
+  });
 });
