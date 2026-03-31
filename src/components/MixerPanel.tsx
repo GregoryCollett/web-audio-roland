@@ -10,10 +10,14 @@ interface FaderProps {
   className?: string;
 }
 
+const SCROLL_STEP = 0.02;
+
 function Fader({ value, onChange, className }: FaderProps) {
   const dragging = useRef(false);
   const startY = useRef(0);
   const startValue = useRef(0);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -39,8 +43,21 @@ function Fader({ value, onChange, className }: FaderProps) {
     [value, onChange],
   );
 
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? SCROLL_STEP : -SCROLL_STEP;
+      onChange(Math.max(0, Math.min(1, valueRef.current + delta)));
+    },
+    [onChange],
+  );
+
   return (
-    <div className={`mixer__fader-track${className ? ` ${className}` : ''}`} onMouseDown={handleMouseDown}>
+    <div
+      className={`mixer__fader-track${className ? ` ${className}` : ''}`}
+      onMouseDown={handleMouseDown}
+      onWheel={handleWheel}
+    >
       <div className="mixer__fader-fill" style={{ height: `${value * 100}%` }} />
     </div>
   );
