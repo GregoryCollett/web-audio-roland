@@ -24,6 +24,12 @@ export interface EngineSnapshot {
     accents: boolean[];
   };
   instruments: Record<InstrumentId, InstrumentParams>;
+  presets: {
+    patterns: PatternPreset[];
+    kits: KitPreset[];
+    activePatternId: string | null;
+    activeKitId: string | null;
+  };
 }
 
 export type VoiceTrigger = (
@@ -67,4 +73,20 @@ export function createDefaultInstruments(): Record<InstrumentId, InstrumentParam
     };
   }
   return instruments;
+}
+
+export interface PatternPreset {
+  id: string;
+  name: string;
+  builtIn: boolean;
+  bpm: number;
+  steps: Record<InstrumentId, boolean[]>;
+  accents: boolean[];
+}
+
+export interface KitPreset {
+  id: string;
+  name: string;
+  builtIn: boolean;
+  instruments: Record<InstrumentId, InstrumentParams>;
 }
