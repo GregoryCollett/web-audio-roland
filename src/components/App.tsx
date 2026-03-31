@@ -11,11 +11,14 @@ import { StepGrid } from './StepGrid';
 import { AccentRow } from './AccentRow';
 import { Playhead } from './Playhead';
 import { MasterSection } from './MasterSection';
+import { BassSection } from './BassSection';
 
 export function App() {
   const [initialized, setInitialized] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId>('kick');
   const [selectedStep, setSelectedStep] = useState(0);
+  const [bassSelectedStep, setBassSelectedStep] = useState(0);
+  const [focusPanel, setFocusPanel] = useState<'drum' | 'bass'>('drum');
   const presets = useDrumPresets();
 
   useKeyboard({
@@ -23,12 +26,19 @@ export function App() {
     setSelectedInstrument,
     selectedStep,
     setSelectedStep,
+    focusPanel,
+    setFocusPanel,
+    bassSelectedStep,
+    setBassSelectedStep,
   });
 
   return (
     <>
       {!initialized && <InitOverlay onInit={() => setInitialized(true)} />}
-      <div className="tr909">
+      <div
+        className={`tr909${focusPanel === 'drum' ? ' tr909--focused' : ''}`}
+        onClick={() => setFocusPanel('drum')}
+      >
         <Transport />
         <div className="preset-row">
           <PresetSelector
@@ -58,6 +68,13 @@ export function App() {
         <Playhead />
       </div>
       <MasterSection />
+      <div onClick={() => setFocusPanel('bass')}>
+        <BassSection
+          selectedStep={bassSelectedStep}
+          onSelectStep={setBassSelectedStep}
+          focused={focusPanel === 'bass'}
+        />
+      </div>
     </>
   );
 }

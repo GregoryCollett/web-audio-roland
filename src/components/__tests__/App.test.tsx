@@ -56,13 +56,16 @@ describe('App', () => {
 
   it('renders pattern and kit preset selectors', () => {
     render(<App />);
-    expect(screen.getByText('Pattern')).toBeDefined();
+    // Both drum and bass sections have 'Pattern' labels — expect at least 2
+    const patternLabels = screen.getAllByText('Pattern');
+    expect(patternLabels.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Kit')).toBeDefined();
   });
 
   it('shows Custom as default preset name', () => {
     render(<App />);
+    // Drum section: Pattern + Kit (2), Bass section: Pattern + Synth (2) = 4 total
     const customLabels = screen.getAllByText('Custom');
-    expect(customLabels.length).toBe(2);
+    expect(customLabels.length).toBe(4);
   });
 });

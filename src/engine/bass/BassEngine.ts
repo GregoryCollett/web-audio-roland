@@ -15,7 +15,6 @@ export class BassEngine {
 
   // Track previous step info for slide
   private prevStep: BassStep | null = null;
-  private prevStepIndex = -1;
 
   constructor(transport: TransportManager) {
     this.snapshot = {
@@ -219,14 +218,12 @@ export class BassEngine {
       this.vca.gain.cancelScheduledValues(time);
       this.vca.gain.setValueAtTime(0, time);
       this.prevStep = bassStep;
-      this.prevStepIndex = step;
       return;
     }
 
     if (bassStep.gate === 'tie') {
       // Sustain previous note — do nothing
       this.prevStep = bassStep;
-      this.prevStepIndex = step;
       return;
     }
 
@@ -275,7 +272,6 @@ export class BassEngine {
     this.vca.gain.setTargetAtTime(0, time + 0.01, decayTime / 3);
 
     this.prevStep = bassStep;
-    this.prevStepIndex = step;
   }
 
   // --- Internal ---

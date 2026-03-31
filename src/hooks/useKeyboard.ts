@@ -2,7 +2,9 @@ import { useEffect, useRef } from 'react';
 import type { InstrumentId } from '../engine/types';
 import { INSTRUMENT_IDS, NUM_STEPS } from '../engine/types';
 import { drumEngine } from './useDrum';
+import { bassEngine } from './useBass';
 import { transport } from './useTransport';
+import { NUM_BASS_STEPS } from '../engine/bass/bassTypes';
 
 // Key → instrument index mapping
 // 1-9 = first 9 instruments, 0 = 10th, - = 11th
@@ -16,6 +18,10 @@ interface KeyboardState {
   setSelectedInstrument: (id: InstrumentId) => void;
   selectedStep: number;
   setSelectedStep: (step: number) => void;
+  focusPanel: 'drum' | 'bass';
+  setFocusPanel: (panel: 'drum' | 'bass') => void;
+  bassSelectedStep: number;
+  setBassSelectedStep: (step: number) => void;
 }
 
 export function useKeyboard(state: KeyboardState): void {
@@ -32,8 +38,124 @@ export function useKeyboard(state: KeyboardState): void {
         return;
       }
 
-      const { selectedInstrument, setSelectedInstrument, selectedStep, setSelectedStep } = stateRef.current;
+      const {
+        selectedInstrument,
+        setSelectedInstrument,
+        selectedStep,
+        setSelectedStep,
+        focusPanel,
+        setFocusPanel,
+        bassSelectedStep,
+        setBassSelectedStep,
+      } = stateRef.current;
       const metaOrCtrl = e.metaKey || e.ctrlKey;
+
+      // --- Tab: toggle focus panel ---
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        setFocusPanel(focusPanel === 'drum' ? 'bass' : 'drum');
+        return;
+      }
+
+      // --- Play/Stop: Space (always active regardless of panel) ---
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        const snap = transport.getSnapshot();
+        if (snap.playing) {
+          transport.stop();
+        } else {
+          transport.play();
+        }
+        return;
+      }
+
+      // --- Shuffle: Cmd+Up / Cmd+Down (always active) ---
+      if (metaOrCtrl && e.key === 'ArrowUp') {
+        e.preventDefault();
+        const snap = transport.getSnapshot();
+        transport.setShuffle(Math.min(1, snap.shuffle + 0.05));
+        return;
+      }
+      if (metaOrCtrl && e.key === 'ArrowDown') {
+        e.preventDefault();
+        const snap = transport.getSnapshot();
+        transport.setShuffle(Math.max(0, snap.shuffle - 0.05));
+        return;
+      }
+
+      // ============================================================
+      // Bass panel keys
+      // ============================================================
+      if (focusPanel === 'bass') {
+        // Left/Right: bass step navigation
+        if (!metaOrCtrl && e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setBassSelectedStep((bassSelectedStep - 1 + NUM_BASS_STEPS) % NUM_BASS_STEPS);
+          return;
+        }
+        if (!metaOrCtrl && e.key === 'ArrowRight') {
+          e.preventDefault();
+          setBassSelectedStep((bassSelectedStep + 1) % NUM_BASS_STEPS);
+          return;
+        }
+
+        // Up/Down: pitch semitone on current bass step
+        if (!metaOrCtrl && e.key === 'ArrowUp') {
+          e.preventDefault();
+          const snap = bassEngine.getSnapshot();
+          const currentNote = snap.pattern.steps[bassSelectedStep].note;
+          bassEngine.setNote(bassSelectedStep, currentNote + 1);
+          return;
+        }
+        if (!metaOrCtrl && e.key === 'ArrowDown') {
+          e.preventDefault();
+          const snap = bassEngine.getSnapshot();
+          const currentNote = snap.pattern.steps[bassSelectedStep].note;
+          bassEngine.setNote(bassSelectedStep, currentNote - 1);
+          return;
+        }
+
+        // s/S: toggle slide
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          bassEngine.toggleSlide(bassSelectedStep);
+          return;
+        }
+
+        // a/A: toggle accent
+        if (e.key === 'a' || e.key === 'A') {
+          e.preventDefault();
+          bassEngine.toggleAccent(bassSelectedStep);
+          return;
+        }
+
+        // n/N: set gate to note
+        if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          bassEngine.setGate(bassSelectedStep, 'note');
+          return;
+        }
+
+        // r/R: set gate to rest
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          bassEngine.setGate(bassSelectedStep, 'rest');
+          return;
+        }
+
+        // t/T: set gate to tie
+        if (e.key === 't' || e.key === 'T') {
+          e.preventDefault();
+          bassEngine.setGate(bassSelectedStep, 'tie');
+          return;
+        }
+
+        return;
+      }
+
+      // ============================================================
+      // Drum panel keys
+      // ============================================================
 
       // --- Instrument selection: 1-9, 0, - ---
       if (!metaOrCtrl && e.key in KEY_TO_INSTRUMENT_INDEX) {
@@ -68,32 +190,6 @@ export function useKeyboard(state: KeyboardState): void {
         e.preventDefault();
         const snap = transport.getSnapshot();
         transport.setBpm(snap.bpm - 1);
-        return;
-      }
-
-      // --- Shuffle: Cmd+Up / Cmd+Down ---
-      if (metaOrCtrl && e.key === 'ArrowUp') {
-        e.preventDefault();
-        const snap = transport.getSnapshot();
-        transport.setShuffle(Math.min(1, snap.shuffle + 0.05));
-        return;
-      }
-      if (metaOrCtrl && e.key === 'ArrowDown') {
-        e.preventDefault();
-        const snap = transport.getSnapshot();
-        transport.setShuffle(Math.max(0, snap.shuffle - 0.05));
-        return;
-      }
-
-      // --- Play/Stop: Space ---
-      if (e.key === ' ' || e.code === 'Space') {
-        e.preventDefault();
-        const snap = transport.getSnapshot();
-        if (snap.playing) {
-          transport.stop();
-        } else {
-          transport.play();
-        }
         return;
       }
 
