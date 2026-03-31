@@ -75,14 +75,6 @@ export class Clock {
     return this.stepDuration;
   }
 
-  dispose(): void {
-    this.stop();
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
-    }
-  }
-
   private schedule(): void {
     if (!this.ctx) return;
 

@@ -5,10 +5,6 @@ import { transport } from './useTransport';
 
 export const drumEngine = new DrumEngine(transport);
 
-export function useDrumSnapshot(): DrumSnapshot {
-  return useSyncExternalStore(drumEngine.subscribe, drumEngine.getSnapshot);
-}
-
 export function useDrumPattern(): DrumSnapshot['pattern'] {
   return useSyncExternalStore(drumEngine.subscribe, () => drumEngine.getSnapshot().pattern);
 }

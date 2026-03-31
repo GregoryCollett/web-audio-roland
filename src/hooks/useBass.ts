@@ -5,10 +5,6 @@ import { transport } from './useTransport';
 
 export const bassEngine = new BassEngine(transport);
 
-export function useBassSnapshot(): BassSnapshot {
-  return useSyncExternalStore(bassEngine.subscribe, bassEngine.getSnapshot);
-}
-
 export function useBassPattern(): BassPattern {
   return useSyncExternalStore(bassEngine.subscribe, () => bassEngine.getSnapshot().pattern);
 }

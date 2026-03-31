@@ -76,10 +76,6 @@ export class TransportManager {
 
   // --- Accessors ---
 
-  getAudioContext(): AudioContext | null {
-    return this.ctx;
-  }
-
   getOutputNode(): AudioNode | null {
     return this._outputNode;
   }
