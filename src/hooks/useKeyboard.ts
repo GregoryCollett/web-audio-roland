@@ -3,8 +3,10 @@ import type { InstrumentId } from '../engine/types';
 import { INSTRUMENT_IDS, NUM_STEPS } from '../engine/types';
 import { drumEngine } from './useDrum';
 import { bassEngine } from './useBass';
+import { synthEngine } from './useSynth';
 import { transport } from './useTransport';
 import { NUM_BASS_STEPS } from '../engine/bass/bassTypes';
+import { NUM_SYNTH_STEPS } from '../engine/synth/synthTypes';
 
 // Key → instrument index mapping
 // 1-9 = first 9 instruments, 0 = 10th, - = 11th
@@ -18,10 +20,12 @@ interface KeyboardState {
   setSelectedInstrument: (id: InstrumentId) => void;
   selectedStep: number;
   setSelectedStep: (step: number) => void;
-  focusPanel: 'drum' | 'bass';
-  setFocusPanel: (panel: 'drum' | 'bass') => void;
+  focusPanel: 'drum' | 'bass' | 'synth';
+  setFocusPanel: (panel: 'drum' | 'bass' | 'synth') => void;
   bassSelectedStep: number;
   setBassSelectedStep: (step: number) => void;
+  synthSelectedStep: number;
+  setSynthSelectedStep: (step: number) => void;
 }
 
 export function useKeyboard(state: KeyboardState): void {
@@ -47,13 +51,17 @@ export function useKeyboard(state: KeyboardState): void {
         setFocusPanel,
         bassSelectedStep,
         setBassSelectedStep,
+        synthSelectedStep,
+        setSynthSelectedStep,
       } = stateRef.current;
       const metaOrCtrl = e.metaKey || e.ctrlKey;
 
-      // --- Tab: toggle focus panel ---
+      // --- Tab: cycle focus panel drum → bass → synth → drum ---
       if (e.key === 'Tab') {
         e.preventDefault();
-        setFocusPanel(focusPanel === 'drum' ? 'bass' : 'drum');
+        if (focusPanel === 'drum') setFocusPanel('bass');
+        else if (focusPanel === 'bass') setFocusPanel('synth');
+        else setFocusPanel('drum');
         return;
       }
 
@@ -147,6 +155,76 @@ export function useKeyboard(state: KeyboardState): void {
         if (e.key === 't' || e.key === 'T') {
           e.preventDefault();
           bassEngine.setGate(bassSelectedStep, 'tie');
+          return;
+        }
+
+        return;
+      }
+
+      // ============================================================
+      // Synth panel keys
+      // ============================================================
+      if (focusPanel === 'synth') {
+        // Left/Right: synth step navigation
+        if (!metaOrCtrl && e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setSynthSelectedStep((synthSelectedStep - 1 + NUM_SYNTH_STEPS) % NUM_SYNTH_STEPS);
+          return;
+        }
+        if (!metaOrCtrl && e.key === 'ArrowRight') {
+          e.preventDefault();
+          setSynthSelectedStep((synthSelectedStep + 1) % NUM_SYNTH_STEPS);
+          return;
+        }
+
+        // Up/Down: pitch semitone on current synth step
+        if (!metaOrCtrl && e.key === 'ArrowUp') {
+          e.preventDefault();
+          const snap = synthEngine.getSnapshot();
+          const currentNote = snap.pattern.steps[synthSelectedStep].note;
+          synthEngine.setNote(synthSelectedStep, currentNote + 1);
+          return;
+        }
+        if (!metaOrCtrl && e.key === 'ArrowDown') {
+          e.preventDefault();
+          const snap = synthEngine.getSnapshot();
+          const currentNote = snap.pattern.steps[synthSelectedStep].note;
+          synthEngine.setNote(synthSelectedStep, currentNote - 1);
+          return;
+        }
+
+        // s/S: toggle slide
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          synthEngine.toggleSlide(synthSelectedStep);
+          return;
+        }
+
+        // a/A: toggle accent
+        if (e.key === 'a' || e.key === 'A') {
+          e.preventDefault();
+          synthEngine.toggleAccent(synthSelectedStep);
+          return;
+        }
+
+        // n/N: set gate to note
+        if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          synthEngine.setGate(synthSelectedStep, 'note');
+          return;
+        }
+
+        // r/R: set gate to rest
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          synthEngine.setGate(synthSelectedStep, 'rest');
+          return;
+        }
+
+        // t/T: set gate to tie
+        if (e.key === 't' || e.key === 'T') {
+          e.preventDefault();
+          synthEngine.setGate(synthSelectedStep, 'tie');
           return;
         }
 

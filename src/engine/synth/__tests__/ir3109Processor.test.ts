@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 vi.stubGlobal('sampleRate', 44100);
 vi.stubGlobal('AudioWorkletProcessor', class {});

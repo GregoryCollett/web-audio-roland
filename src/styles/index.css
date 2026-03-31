@@ -1168,3 +1168,47 @@ body {
   opacity: 0.4;
 }
 
+
+/* ============================================================ */
+/* SH-2 Synth Section */
+/* ============================================================ */
+.synth-section { background: var(--bg-primary); border-radius: var(--radius-xl); padding: 24px; max-width: 900px; width: 100%; margin-top: 16px; }
+.synth-section--focused { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header — same as bass */
+.synth-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.synth-header__title-row { display: flex; align-items: baseline; }
+.synth-header__title { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: 2px; }
+.synth-header__subtitle { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
+.synth-header__controls { display: flex; gap: 12px; align-items: flex-start; }
+
+/* Osc Section */
+.synth-osc-section { display: flex; gap: 12px; margin-bottom: 16px; }
+.synth-osc-panel { flex: 1; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius-lg); }
+.synth-osc-panel__title { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.synth-osc-panel__controls { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.synth-osc-panel__waveform { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary); cursor: pointer; text-transform: uppercase; }
+.synth-osc-panel__waveform:hover { border-color: var(--text-muted); }
+.synth-osc-panel__octave { display: flex; align-items: center; gap: 4px; }
+.synth-osc-panel__octave-btn { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 6px; font-size: 9px; font-family: var(--font-mono); color: var(--text-secondary); cursor: pointer; }
+.synth-osc-panel__octave-btn:hover { border-color: var(--text-muted); }
+.synth-osc-panel__octave-value { font-size: 11px; font-weight: 700; color: var(--accent); min-width: 20px; text-align: center; }
+.synth-noise { padding: 10px; background: var(--bg-secondary); border-radius: var(--radius-lg); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.synth-noise__title { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+/* Filter, Amp, LFO sections */
+.synth-param-section { margin-bottom: 12px; }
+.synth-param-section__title { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.synth-param-section__row { display: flex; gap: 12px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius-lg); align-items: flex-start; }
+.synth-adsr { display: flex; gap: 8px; margin-left: 16px; padding-left: 16px; border-left: 1px solid var(--border); }
+
+/* LFO destination button */
+.synth-lfo-destination { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary); cursor: pointer; text-transform: uppercase; }
+.synth-lfo-destination:hover { border-color: var(--text-muted); }
+
+/* Step grid + editor — reuse bass patterns */
+.synth-step-grid { margin-bottom: 12px; }
+.synth-step-grid__rows { display: flex; gap: 4px; }
+.synth-step-grid__group { display: flex; gap: 3px; }
+.synth-step-grid__group + .synth-step-grid__group { margin-left: 2px; }
+.synth-step-editor { display: flex; gap: 12px; align-items: center; padding: 8px 0; flex-wrap: wrap; }

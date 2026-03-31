@@ -1,9 +1,7 @@
 import type {
   SynthSnapshot,
-  SynthPattern,
   SynthPatternPreset,
   SynthSoundPreset,
-  SH2Params,
   OscParams,
   ADSRParams,
   SynthStep,

@@ -12,13 +12,15 @@ import { Playhead } from './drum/Playhead';
 import { MasterSection } from './master/MasterSection';
 import { BassSection } from './bass/BassSection';
 import { MixerPanel } from './mixer/MixerPanel';
+import { SynthSection } from './synth/SynthSection';
 
 export function App() {
   const [initialized, setInitialized] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId>('kick');
   const [selectedStep, setSelectedStep] = useState(0);
   const [bassSelectedStep, setBassSelectedStep] = useState(0);
-  const [focusPanel, setFocusPanel] = useState<'drum' | 'bass'>('drum');
+  const [synthSelectedStep, setSynthSelectedStep] = useState(0);
+  const [focusPanel, setFocusPanel] = useState<'drum' | 'bass' | 'synth'>('drum');
 
   useKeyboard({
     selectedInstrument,
@@ -29,6 +31,8 @@ export function App() {
     setFocusPanel,
     bassSelectedStep,
     setBassSelectedStep,
+    synthSelectedStep,
+    setSynthSelectedStep,
   });
 
   return (
@@ -54,6 +58,13 @@ export function App() {
           selectedStep={bassSelectedStep}
           onSelectStep={setBassSelectedStep}
           focused={focusPanel === 'bass'}
+        />
+      </div>
+      <div onClick={() => setFocusPanel('synth')}>
+        <SynthSection
+          selectedStep={synthSelectedStep}
+          onSelectStep={setSynthSelectedStep}
+          focused={focusPanel === 'synth'}
         />
       </div>
       <MixerPanel />
