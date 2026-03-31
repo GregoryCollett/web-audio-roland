@@ -73,6 +73,11 @@ function createMockAudioContext() {
       getChannelData: () => new Float32Array(length),
     })),
     createBufferSource: vi.fn(() => ({ ...mockBufferSource })),
+    createWaveShaper: vi.fn(() => ({
+      curve: null,
+      oversample: 'none',
+      connect: vi.fn(),
+    })),
   } as unknown as AudioContext;
 
   return ctx;
