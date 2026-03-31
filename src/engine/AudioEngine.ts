@@ -12,12 +12,27 @@ import { Clock } from './clock';
 import { voices, openHat as openHatVoice } from './voices';
 import { PresetStorage } from './presetStorage';
 
+const DEFAULT_MASTER = {
+  volume: 0.8,
+  compressor: true,
+  threshold: -18,
+  ratio: 4,
+  knee: 8,
+  attack: 0.005,
+  release: 0.15,
+};
+
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private clock: Clock;
   private listeners = new Set<() => void>();
   private snapshot: EngineSnapshot;
   private openHatGain: GainNode | null = null;
+
+  // Master chain nodes — created on init()
+  private compressorNode: DynamicsCompressorNode | null = null;
+  private masterGain: GainNode | null = null;
+  private outputNode: AudioNode | null = null; // where voices connect to
 
   constructor() {
     this.snapshot = {
@@ -32,6 +47,7 @@ export class AudioEngine {
         accents: new Array(NUM_STEPS).fill(false),
       },
       instruments: createDefaultInstruments(),
+      master: { ...DEFAULT_MASTER },
       presets: {
         patterns: PresetStorage.getPatternPresets(),
         kits: PresetStorage.getKitPresets(),
@@ -43,6 +59,8 @@ export class AudioEngine {
     this.clock = new Clock((time, step) => this.onTick(time, step));
   }
 
+  // --- Subscription API ---
+
   subscribe = (callback: () => void): (() => void) => {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
@@ -52,13 +70,31 @@ export class AudioEngine {
     return this.snapshot;
   };
 
+  // --- Lifecycle ---
+
   async init(): Promise<void> {
     if (this.ctx) return;
     this.ctx = new AudioContext();
     if (this.ctx.state === 'suspended') {
       await this.ctx.resume();
     }
+
+    // Build master chain: voices → compressor → masterGain → destination
+    this.compressorNode = this.ctx.createDynamicsCompressor();
+    this.applyCompressorParams();
+
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = this.snapshot.master.volume;
+
+    // Wire up the chain
+    this.compressorNode.connect(this.masterGain);
+    this.masterGain.connect(this.ctx.destination);
+
+    // Voices connect to the compressor input
+    this.outputNode = this.compressorNode;
   }
+
+  // --- Transport ---
 
   play(): void {
     if (!this.ctx || this.snapshot.transport.playing) return;
@@ -98,6 +134,8 @@ export class AudioEngine {
     }
   }
 
+  // --- Pattern Editing ---
+
   toggleStep(instrument: InstrumentId, step: number): void {
     const currentSteps = this.snapshot.pattern.steps[instrument];
     const newSteps = [...currentSteps];
@@ -121,6 +159,8 @@ export class AudioEngine {
     });
   }
 
+  // --- Instrument Params ---
+
   setParam(instrument: InstrumentId, param: string, value: number): void {
     const current = this.snapshot.instruments[instrument];
     this.emit({
@@ -131,6 +171,34 @@ export class AudioEngine {
       presets: { ...this.snapshot.presets, activeKitId: null },
     });
   }
+
+  // --- Master Section ---
+
+  setMasterVolume(volume: number): void {
+    const clamped = Math.max(0, Math.min(1, volume));
+    if (this.masterGain) {
+      this.masterGain.gain.value = clamped;
+    }
+    this.emit({
+      master: { ...this.snapshot.master, volume: clamped },
+    });
+  }
+
+  setCompressorEnabled(enabled: boolean): void {
+    this.emit({
+      master: { ...this.snapshot.master, compressor: enabled },
+    });
+    this.rewireMasterChain();
+  }
+
+  setCompressorParam(param: 'threshold' | 'ratio' | 'knee' | 'attack' | 'release', value: number): void {
+    this.emit({
+      master: { ...this.snapshot.master, [param]: value },
+    });
+    this.applyCompressorParams();
+  }
+
+  // --- Preset Management ---
 
   loadPatternPreset(id: string): void {
     const preset = this.snapshot.presets.patterns.find((p) => p.id === id);
@@ -204,8 +272,11 @@ export class AudioEngine {
     });
   }
 
+  // --- Clock Callback ---
+
   private onTick(time: number, step: number): void {
     if (this.ctx) {
+      const dest = this.outputNode ?? this.ctx.destination;
       const accent = this.snapshot.pattern.accents[step];
       for (const id of INSTRUMENT_IDS) {
         if (this.snapshot.pattern.steps[id][step]) {
@@ -219,10 +290,10 @@ export class AudioEngine {
 
           if (id === 'openHat') {
             this.openHatGain = openHatVoice(
-              this.ctx, this.ctx.destination, time, params, accent,
+              this.ctx, dest, time, params, accent,
             );
           } else {
-            voices[id](this.ctx, this.ctx.destination, time, params, accent);
+            voices[id](this.ctx, dest, time, params, accent);
           }
         }
       }
@@ -231,6 +302,34 @@ export class AudioEngine {
     this.emit({
       transport: { ...this.snapshot.transport, currentStep: step },
     });
+  }
+
+  // --- Internal ---
+
+  private applyCompressorParams(): void {
+    if (!this.compressorNode) return;
+    const m = this.snapshot.master;
+    this.compressorNode.threshold.value = m.threshold;
+    this.compressorNode.ratio.value = m.ratio;
+    this.compressorNode.knee.value = m.knee;
+    this.compressorNode.attack.value = m.attack;
+    this.compressorNode.release.value = m.release;
+  }
+
+  private rewireMasterChain(): void {
+    if (!this.ctx || !this.compressorNode || !this.masterGain) return;
+
+    // Disconnect everything from masterGain input
+    this.compressorNode.disconnect();
+
+    if (this.snapshot.master.compressor) {
+      // voices → compressor → masterGain → destination
+      this.compressorNode.connect(this.masterGain);
+      this.outputNode = this.compressorNode;
+    } else {
+      // voices → masterGain → destination (bypass compressor)
+      this.outputNode = this.masterGain;
+    }
   }
 
   private emit(partial: Partial<EngineSnapshot>): void {

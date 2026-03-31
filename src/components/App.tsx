@@ -9,6 +9,7 @@ import { ParamKnobs } from './ParamKnobs';
 import { StepGrid } from './StepGrid';
 import { AccentRow } from './AccentRow';
 import { Playhead } from './Playhead';
+import { MasterSection } from './MasterSection';
 
 export function App() {
   const [initialized, setInitialized] = useState(false);
@@ -47,6 +48,7 @@ export function App() {
         <AccentRow />
         <Playhead />
       </div>
+      <MasterSection />
     </>
   );
 }

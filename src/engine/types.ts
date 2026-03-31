@@ -25,6 +25,15 @@ export interface EngineSnapshot {
     accents: boolean[];
   };
   instruments: Record<InstrumentId, InstrumentParams>;
+  master: {
+    volume: number;      // 0–1
+    compressor: boolean; // on/off
+    threshold: number;   // -60 to 0 dB
+    ratio: number;       // 1 to 20
+    knee: number;        // 0 to 40 dB
+    attack: number;      // 0 to 1 seconds
+    release: number;     // 0 to 1 seconds
+  };
   presets: {
     patterns: PatternPreset[];
     kits: KitPreset[];

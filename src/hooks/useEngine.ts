@@ -39,6 +39,13 @@ export function useInstrumentParams(id: InstrumentId): InstrumentParams {
   });
 }
 
+export function useMaster(): EngineSnapshot['master'] {
+  return useSyncExternalStore(
+    engine.subscribe,
+    () => engine.getSnapshot().master,
+  );
+}
+
 export function usePresets(): EngineSnapshot['presets'] {
   return useSyncExternalStore(
     engine.subscribe,
