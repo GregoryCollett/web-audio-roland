@@ -3,8 +3,21 @@ import { NUM_STEPS } from './types';
 const SCHEDULER_INTERVAL_MS = 25;
 const LOOKAHEAD_S = 0.1;
 
+function createWorker(): Worker | null {
+  try {
+    return new Worker(
+      new URL('./clockWorker.ts', import.meta.url),
+      { type: 'module' },
+    );
+  } catch {
+    // Worker not available (SSR, test env, etc.) — will fall back to setInterval
+    return null;
+  }
+}
+
 export class Clock {
-  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private worker: Worker | null = null;
+  private fallbackIntervalId: ReturnType<typeof setInterval> | null = null;
   private nextNoteTime = 0;
   private currentStep = 0;
   private stepDuration = 0;
@@ -14,6 +27,14 @@ export class Clock {
 
   constructor(onTick: (time: number, step: number) => void) {
     this.onTick = onTick;
+    this.worker = createWorker();
+    if (this.worker) {
+      this.worker.onmessage = (e: MessageEvent) => {
+        if (e.data.type === 'tick') {
+          this.schedule();
+        }
+      };
+    }
   }
 
   start(ctx: AudioContext, bpm: number, shuffle = 0): void {
@@ -22,13 +43,22 @@ export class Clock {
     this.stepDuration = 60 / bpm / 4;
     this.shuffle = shuffle;
     this.nextNoteTime = ctx.currentTime;
-    this.intervalId = setInterval(() => this.schedule(), SCHEDULER_INTERVAL_MS);
+
+    if (this.worker) {
+      this.worker.postMessage({ type: 'start', intervalMs: SCHEDULER_INTERVAL_MS });
+    } else {
+      // Fallback for environments without Worker support
+      this.fallbackIntervalId = setInterval(() => this.schedule(), SCHEDULER_INTERVAL_MS);
+    }
   }
 
   stop(): void {
-    if (this.intervalId !== null) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+    if (this.worker) {
+      this.worker.postMessage({ type: 'stop' });
+    }
+    if (this.fallbackIntervalId !== null) {
+      clearInterval(this.fallbackIntervalId);
+      this.fallbackIntervalId = null;
     }
     this.ctx = null;
   }
@@ -45,13 +75,18 @@ export class Clock {
     return this.stepDuration;
   }
 
+  dispose(): void {
+    this.stop();
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+  }
+
   private schedule(): void {
     if (!this.ctx) return;
 
     while (this.nextNoteTime < this.ctx.currentTime + LOOKAHEAD_S) {
-      // Odd-numbered steps (1,3,5,...) get delayed by shuffle amount.
-      // At shuffle=0, no offset. At shuffle=1, the odd step moves
-      // to 2/3 of the way toward the next step (triplet feel).
       const shuffleOffset = (this.currentStep % 2 === 1)
         ? this.stepDuration * this.shuffle * (2 / 3)
         : 0;
