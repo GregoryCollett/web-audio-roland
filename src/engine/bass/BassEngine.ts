@@ -253,16 +253,21 @@ export class BassEngine {
     const decayTime = 0.03 + synth.decay * 0.5;
 
     if (this.useWorklet && this.filter instanceof AudioWorkletNode) {
-      const cutoffParam = this.filter.parameters.get('cutoff');
-      if (cutoffParam) {
-        cutoffParam.cancelScheduledValues(time);
-        cutoffParam.setValueAtTime(baseCutoffHz + envAmount, time);
-        cutoffParam.setTargetAtTime(baseCutoffHz, time, decayTime / 3);
+      const freqParam = this.filter.parameters.get('frequency');
+      const resParam = this.filter.parameters.get('resonance');
+      if (freqParam) {
+        freqParam.cancelScheduledValues(time);
+        freqParam.setValueAtTime(Math.min(20000, baseCutoffHz + envAmount), time);
+        freqParam.setTargetAtTime(Math.max(20, baseCutoffHz), time, decayTime / 3);
+      }
+      if (resParam) {
+        resParam.setValueAtTime(synth.resonance * 4, time);
       }
     } else if (this.filter instanceof BiquadFilterNode) {
       this.filter.frequency.cancelScheduledValues(time);
-      this.filter.frequency.setValueAtTime(baseCutoffHz + envAmount, time);
-      this.filter.frequency.setTargetAtTime(baseCutoffHz, time, decayTime / 3);
+      this.filter.frequency.setValueAtTime(Math.min(20000, baseCutoffHz + envAmount), time);
+      this.filter.frequency.setTargetAtTime(Math.max(20, baseCutoffHz), time, decayTime / 3);
+      this.filter.Q.value = synth.resonance * 20;
     }
 
     // VCA envelope
