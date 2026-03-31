@@ -1,5 +1,31 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useMaster, engine } from '../hooks/useEngine';
+
+// --- Compressor presets ---
+
+interface CompPreset {
+  name: string;
+  threshold: number;
+  ratio: number;
+  knee: number;
+  attack: number;
+  release: number;
+}
+
+const COMP_PRESETS: CompPreset[] = [
+  { name: 'Drum Bus',      threshold: -18, ratio: 4,   knee: 8,  attack: 0.005, release: 0.15 },
+  { name: 'Gentle Glue',   threshold: -12, ratio: 2,   knee: 20, attack: 0.01,  release: 0.2  },
+  { name: 'Punchy',        threshold: -20, ratio: 6,   knee: 4,  attack: 0.001, release: 0.08 },
+  { name: 'Smash',         threshold: -30, ratio: 12,  knee: 2,  attack: 0.001, release: 0.05 },
+  { name: 'Limiter',       threshold: -6,  ratio: 20,  knee: 0,  attack: 0.001, release: 0.05 },
+  { name: 'Warm',          threshold: -15, ratio: 3,   knee: 15, attack: 0.008, release: 0.25 },
+  { name: 'Transient Snap', threshold: -22, ratio: 5,  knee: 6,  attack: 0.02,  release: 0.1  },
+  { name: 'Parallel Crush', threshold: -35, ratio: 15, knee: 0,  attack: 0.001, release: 0.03 },
+  { name: 'Open',          threshold: -10, ratio: 1.5, knee: 30, attack: 0.015, release: 0.3  },
+  { name: 'Flat',          threshold: -24, ratio: 8,   knee: 0,  attack: 0.003, release: 0.12 },
+];
+
+// --- Knob component ---
 
 interface MasterKnobProps {
   label: string;
@@ -61,19 +87,73 @@ function MasterKnob({ label, value, min, max, displayValue, onChange }: MasterKn
   );
 }
 
+// --- Main component ---
+
+function findMatchingPreset(master: { threshold: number; ratio: number; knee: number; attack: number; release: number }): string {
+  for (const p of COMP_PRESETS) {
+    if (
+      Math.abs(p.threshold - master.threshold) < 0.5 &&
+      Math.abs(p.ratio - master.ratio) < 0.1 &&
+      Math.abs(p.knee - master.knee) < 0.5 &&
+      Math.abs(p.attack - master.attack) < 0.001 &&
+      Math.abs(p.release - master.release) < 0.01
+    ) {
+      return p.name;
+    }
+  }
+  return '';
+}
+
 export function MasterSection() {
   const master = useMaster();
+  const [presetOpen, setPresetOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const activeName = findMatchingPreset(master) || 'Custom';
+
+  const loadPreset = (preset: CompPreset) => {
+    engine.setCompressorParam('threshold', preset.threshold);
+    engine.setCompressorParam('ratio', preset.ratio);
+    engine.setCompressorParam('knee', preset.knee);
+    engine.setCompressorParam('attack', preset.attack);
+    engine.setCompressorParam('release', preset.release);
+    setPresetOpen(false);
+  };
 
   return (
     <div className="master">
       <div className="master__header">
         <span className="master__title">MASTER</span>
-        <button
-          className={`master__comp-toggle${master.compressor ? ' master__comp-toggle--active' : ''}`}
-          onClick={() => engine.setCompressorEnabled(!master.compressor)}
-        >
-          COMP {master.compressor ? 'ON' : 'OFF'}
-        </button>
+        <div className="master__header-controls">
+          <div className="master__preset-select" ref={dropdownRef}>
+            <button
+              className="master__preset-trigger"
+              onClick={() => setPresetOpen(!presetOpen)}
+            >
+              <span>{activeName}</span>
+              <span className="preset-selector__arrow">{presetOpen ? '\u25B2' : '\u25BC'}</span>
+            </button>
+            {presetOpen && (
+              <div className="master__preset-dropdown">
+                {COMP_PRESETS.map((p) => (
+                  <button
+                    key={p.name}
+                    className={`preset-selector__item${p.name === activeName ? ' preset-selector__item--active' : ''}`}
+                    onClick={() => loadPreset(p)}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            className={`master__comp-toggle${master.compressor ? ' master__comp-toggle--active' : ''}`}
+            onClick={() => engine.setCompressorEnabled(!master.compressor)}
+          >
+            {master.compressor ? 'ON' : 'OFF'}
+          </button>
+        </div>
       </div>
       <div className="master__knobs">
         <MasterKnob
