@@ -158,7 +158,7 @@ export class TransportManager {
 
   setCompressorEnabled(enabled: boolean): void {
     this.emit({ master: { ...this.snapshot.master, compressor: enabled } });
-    this.rewireMasterChain();
+    this.applyCompressorParams();
   }
 
   setCompressorParam(
@@ -186,23 +186,21 @@ export class TransportManager {
   private applyCompressorParams(): void {
     if (!this.compressorNode) return;
     const m = this.snapshot.master;
-    this.compressorNode.threshold.value = m.threshold;
-    this.compressorNode.ratio.value = m.ratio;
-    this.compressorNode.knee.value = m.knee;
-    this.compressorNode.attack.value = m.attack;
-    this.compressorNode.release.value = m.release;
-  }
 
-  private rewireMasterChain(): void {
-    if (!this.ctx || !this.compressorNode || !this.masterGain) return;
-
-    this.compressorNode.disconnect();
-
-    if (this.snapshot.master.compressor) {
-      this.compressorNode.connect(this.masterGain);
-      this._compressorInput = this.compressorNode;
+    if (m.compressor) {
+      // Apply user settings
+      this.compressorNode.threshold.value = m.threshold;
+      this.compressorNode.ratio.value = m.ratio;
+      this.compressorNode.knee.value = m.knee;
+      this.compressorNode.attack.value = m.attack;
+      this.compressorNode.release.value = m.release;
     } else {
-      this._compressorInput = this.masterGain;
+      // Bypass: passthrough settings (no compression)
+      this.compressorNode.threshold.value = 0;
+      this.compressorNode.ratio.value = 1;
+      this.compressorNode.knee.value = 0;
+      this.compressorNode.attack.value = 0;
+      this.compressorNode.release.value = 0.01;
     }
   }
 
