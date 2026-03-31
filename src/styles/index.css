@@ -45,6 +45,26 @@ body {
   padding: 24px;
   max-width: 900px;
   width: 100%;
+  margin-top: 16px;
+}
+
+.tr909__header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tr909__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+
+.tr909__subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 8px;
 }
 
 /* Transport */
@@ -52,16 +72,19 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: 16px 24px;
+  max-width: 900px;
+  width: 100%;
 }
 
 .transport__title {
-  font-size: 20px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-muted);
   letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .transport__subtitle {

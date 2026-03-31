@@ -35,11 +35,15 @@ export function App() {
   return (
     <>
       {!initialized && <InitOverlay onInit={() => setInitialized(true)} />}
+      <Transport />
       <div
         className={`tr909${focusPanel === 'drum' ? ' tr909--focused' : ''}`}
         onClick={() => setFocusPanel('drum')}
       >
-        <Transport />
+        <div className="tr909__header">
+          <span className="tr909__title">TR-909</span>
+          <span className="tr909__subtitle">RHYTHM COMPOSER</span>
+        </div>
         <div className="preset-row">
           <PresetSelector
             label="Pattern"
@@ -67,7 +71,6 @@ export function App() {
         <AccentRow selectedStep={selectedStep} />
         <Playhead />
       </div>
-      <MasterSection />
       <div onClick={() => setFocusPanel('bass')}>
         <BassSection
           selectedStep={bassSelectedStep}
@@ -75,6 +78,7 @@ export function App() {
           focused={focusPanel === 'bass'}
         />
       </div>
+      <MasterSection />
     </>
   );
 }

@@ -80,8 +80,7 @@ export function Transport() {
   return (
     <div className="transport">
       <div>
-        <span className="transport__title">TR-909</span>
-        <span className="transport__subtitle">RHYTHM COMPOSER</span>
+        <span className="transport__title">TRANSPORT</span>
       </div>
       <div className="transport__controls">
         {editingBpm ? (
