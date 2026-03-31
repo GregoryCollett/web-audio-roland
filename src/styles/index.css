@@ -98,6 +98,41 @@ body {
   color: var(--text-muted);
 }
 
+.transport__shuffle {
+  text-align: center;
+  user-select: none;
+}
+
+.transport__shuffle-dial {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  position: relative;
+  cursor: grab;
+}
+
+.transport__shuffle-dial:active {
+  cursor: grabbing;
+}
+
+.transport__shuffle-center {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  position: absolute;
+  top: 11px;
+  left: 11px;
+}
+
+.transport__shuffle-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  display: block;
+  margin-top: 2px;
+}
+
 .transport__btn {
   border: none;
   border-radius: var(--radius-md);

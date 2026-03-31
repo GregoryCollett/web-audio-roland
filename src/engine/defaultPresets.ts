@@ -11,6 +11,7 @@ function patternPreset(
   bpm: number,
   active: Partial<Record<InstrumentId, number[]>>,
   accentSteps: number[] = [],
+  shuffle = 0,
 ): PatternPreset {
   const steps = {} as Record<InstrumentId, boolean[]>;
   for (const inst of INSTRUMENT_IDS) {
@@ -28,7 +29,7 @@ function patternPreset(
   for (const i of accentSteps) {
     accents[i] = true;
   }
-  return { id, name, builtIn: true, bpm, steps, accents };
+  return { id, name, builtIn: true, bpm, shuffle, steps, accents };
 }
 
 function kitPreset(
@@ -68,6 +69,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       openHat:   [2, 6, 10, 14],
     },
     [0, 4, 8, 12],
+    0.15, // subtle shuffle for groove
   ),
 
   patternPreset(
@@ -94,6 +96,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       openHat:   [12],
     },
     [0, 4, 12],
+    0.55, // heavy swing for that head-nod feel
   ),
 
   patternPreset(
@@ -107,6 +110,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       rimshot:   [2, 8, 14],
     },
     [0, 2, 4, 8, 12, 14],
+    0.3, // moderate funk shuffle
   ),
 
   patternPreset(
@@ -201,6 +205,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       openHat:   [3, 11],
     },
     [0, 4, 12],
+    0.4, // garage shuffle
   ),
 
   patternPreset(
@@ -285,6 +290,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       lowTom:    [14, 15],
     },
     [0, 4, 8, 12],
+    0.2, // light disco shuffle
   ),
 
   patternPreset(
@@ -299,6 +305,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       clap:      [4],
     },
     [0, 4, 12],
+    0.35, // trap swing
   ),
 
   patternPreset(
@@ -327,6 +334,7 @@ export const DEFAULT_PATTERN_PRESETS: PatternPreset[] = [
       rimshot:   [2, 6, 10, 14],
     },
     [0, 4, 8, 12],
+    0.25, // subtle afrobeat swing
   ),
 ];
 

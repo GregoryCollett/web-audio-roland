@@ -17,6 +17,7 @@ export interface EngineSnapshot {
   transport: {
     playing: boolean;
     bpm: number;
+    shuffle: number; // 0–1
     currentStep: number; // 0–15
   };
   pattern: {
@@ -80,6 +81,7 @@ export interface PatternPreset {
   name: string;
   builtIn: boolean;
   bpm: number;
+  shuffle: number; // 0–1
   steps: Record<InstrumentId, boolean[]>;
   accents: boolean[];
 }

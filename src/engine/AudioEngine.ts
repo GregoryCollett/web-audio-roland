@@ -24,6 +24,7 @@ export class AudioEngine {
       transport: {
         playing: false,
         bpm: 120,
+        shuffle: 0,
         currentStep: 0,
       },
       pattern: {
@@ -64,7 +65,7 @@ export class AudioEngine {
     this.emit({
       transport: { ...this.snapshot.transport, playing: true, currentStep: 0 },
     });
-    this.clock.start(this.ctx, this.snapshot.transport.bpm);
+    this.clock.start(this.ctx, this.snapshot.transport.bpm, this.snapshot.transport.shuffle);
   }
 
   stop(): void {
@@ -83,6 +84,17 @@ export class AudioEngine {
     });
     if (this.snapshot.transport.playing) {
       this.clock.setBpm(clamped);
+    }
+  }
+
+  setShuffle(shuffle: number): void {
+    const clamped = Math.max(0, Math.min(1, shuffle));
+    this.emit({
+      transport: { ...this.snapshot.transport, shuffle: clamped },
+      presets: { ...this.snapshot.presets, activePatternId: null },
+    });
+    if (this.snapshot.transport.playing) {
+      this.clock.setShuffle(clamped);
     }
   }
 
@@ -125,10 +137,13 @@ export class AudioEngine {
     if (!preset) return;
     this.emit({
       pattern: { steps: structuredClone(preset.steps), accents: [...preset.accents] },
-      transport: { ...this.snapshot.transport, bpm: preset.bpm },
+      transport: { ...this.snapshot.transport, bpm: preset.bpm, shuffle: preset.shuffle },
       presets: { ...this.snapshot.presets, activePatternId: id },
     });
-    if (this.snapshot.transport.playing) { this.clock.setBpm(preset.bpm); }
+    if (this.snapshot.transport.playing) {
+      this.clock.setBpm(preset.bpm);
+      this.clock.setShuffle(preset.shuffle);
+    }
   }
 
   loadKitPreset(id: string): void {
@@ -145,6 +160,7 @@ export class AudioEngine {
     const preset: PatternPreset = {
       id, name, builtIn: false,
       bpm: this.snapshot.transport.bpm,
+      shuffle: this.snapshot.transport.shuffle,
       steps: structuredClone(this.snapshot.pattern.steps),
       accents: [...this.snapshot.pattern.accents],
     };
