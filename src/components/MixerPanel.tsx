@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useMixer, mixer } from '../hooks/useTransport';
 import type { ChannelState } from '../engine/MixerEngine';
 
@@ -17,7 +17,10 @@ function Fader({ value, onChange, className }: FaderProps) {
   const startY = useRef(0);
   const startValue = useRef(0);
   const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  const elRef = useRef<HTMLDivElement>(null);
   valueRef.current = value;
+  onChangeRef.current = onChange;
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -43,20 +46,26 @@ function Fader({ value, onChange, className }: FaderProps) {
     [value, onChange],
   );
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+  // Native non-passive wheel listener so we can preventDefault
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const delta = e.deltaY < 0 ? SCROLL_STEP : -SCROLL_STEP;
-      onChange(Math.max(0, Math.min(1, valueRef.current + delta)));
-    },
-    [onChange],
-  );
+      onChangeRef.current(Math.max(0, Math.min(1, valueRef.current + delta)));
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
 
   return (
     <div
+      ref={elRef}
       className={`mixer__fader-track${className ? ` ${className}` : ''}`}
       onMouseDown={handleMouseDown}
-      onWheel={handleWheel}
     >
       <div className="mixer__fader-fill" style={{ height: `${value * 100}%` }} />
     </div>
