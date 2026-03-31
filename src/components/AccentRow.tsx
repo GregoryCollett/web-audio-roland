@@ -1,4 +1,4 @@
-import { usePattern, engine } from '../hooks/useEngine';
+import { useDrumPattern, drumEngine } from '../hooks/useDrum';
 
 const GROUPS = [
   [0, 1, 2, 3],
@@ -12,7 +12,7 @@ interface AccentRowProps {
 }
 
 export function AccentRow({ selectedStep }: AccentRowProps) {
-  const pattern = usePattern();
+  const pattern = useDrumPattern();
 
   return (
     <div className="accent-row">
@@ -26,7 +26,7 @@ export function AccentRow({ selectedStep }: AccentRowProps) {
                 className={`accent-btn ${
                   pattern.accents[step] ? 'accent-btn--active' : 'accent-btn--inactive'
                 }${step === selectedStep ? ' accent-btn--selected' : ''}`}
-                onClick={() => engine.toggleAccent(step)}
+                onClick={() => drumEngine.toggleAccent(step)}
               />
             ))}
           </div>

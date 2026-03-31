@@ -1,4 +1,4 @@
-import { useTransport } from '../hooks/useEngine';
+import { useTransportSnapshot } from '../hooks/useTransport';
 
 const GROUPS = [
   [0, 1, 2, 3],
@@ -8,7 +8,7 @@ const GROUPS = [
 ];
 
 export function Playhead() {
-  const transport = useTransport();
+  const transport = useTransportSnapshot();
 
   return (
     <div className="playhead">

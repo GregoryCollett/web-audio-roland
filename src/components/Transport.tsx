@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { useTransport, engine } from '../hooks/useEngine';
+import { useTransportSnapshot, transport } from '../hooks/useTransport';
 
 function ShuffleKnob({ value }: { value: number }) {
   const dragging = useRef(false);
@@ -16,7 +16,7 @@ function ShuffleKnob({ value }: { value: number }) {
         if (!dragging.current) return;
         const delta = (startY.current - e.clientY) / 150;
         const newValue = Math.max(0, Math.min(1, startValue.current + delta));
-        engine.setShuffle(newValue);
+        transport.setShuffle(newValue);
       };
 
       const handleMouseUp = () => {
@@ -51,20 +51,20 @@ function ShuffleKnob({ value }: { value: number }) {
 }
 
 export function Transport() {
-  const transport = useTransport();
+  const snap = useTransportSnapshot();
   const [editingBpm, setEditingBpm] = useState(false);
   const [bpmInput, setBpmInput] = useState('');
 
   const handleBpmClick = useCallback(() => {
     setEditingBpm(true);
-    setBpmInput(String(transport.bpm));
-  }, [transport.bpm]);
+    setBpmInput(String(snap.bpm));
+  }, [snap.bpm]);
 
   const handleBpmBlur = useCallback(() => {
     setEditingBpm(false);
     const value = parseInt(bpmInput, 10);
     if (!isNaN(value)) {
-      engine.setBpm(value);
+      transport.setBpm(value);
     }
   }, [bpmInput]);
 
@@ -98,20 +98,20 @@ export function Transport() {
           />
         ) : (
           <div className="transport__bpm" onClick={handleBpmClick}>
-            {transport.bpm}
+            {snap.bpm}
           </div>
         )}
         <span className="transport__bpm-label">BPM</span>
-        <ShuffleKnob value={transport.shuffle} />
+        <ShuffleKnob value={snap.shuffle} />
         <button
           className="transport__btn transport__btn--play"
-          onClick={() => engine.play()}
+          onClick={() => transport.play()}
         >
           PLAY
         </button>
         <button
           className="transport__btn transport__btn--stop"
-          onClick={() => engine.stop()}
+          onClick={() => transport.stop()}
         >
           STOP
         </button>

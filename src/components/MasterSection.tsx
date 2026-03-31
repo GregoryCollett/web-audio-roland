@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { useMaster, engine } from '../hooks/useEngine';
+import { useMaster, transport } from '../hooks/useTransport';
 
 // --- Compressor presets ---
 
@@ -112,11 +112,11 @@ export function MasterSection() {
   const activeName = findMatchingPreset(master) || 'Custom';
 
   const loadPreset = (preset: CompPreset) => {
-    engine.setCompressorParam('threshold', preset.threshold);
-    engine.setCompressorParam('ratio', preset.ratio);
-    engine.setCompressorParam('knee', preset.knee);
-    engine.setCompressorParam('attack', preset.attack);
-    engine.setCompressorParam('release', preset.release);
+    transport.setCompressorParam('threshold', preset.threshold);
+    transport.setCompressorParam('ratio', preset.ratio);
+    transport.setCompressorParam('knee', preset.knee);
+    transport.setCompressorParam('attack', preset.attack);
+    transport.setCompressorParam('release', preset.release);
     setPresetOpen(false);
   };
 
@@ -149,7 +149,7 @@ export function MasterSection() {
           </div>
           <button
             className={`master__comp-toggle${master.compressor ? ' master__comp-toggle--active' : ''}`}
-            onClick={() => engine.setCompressorEnabled(!master.compressor)}
+            onClick={() => transport.setCompressorEnabled(!master.compressor)}
           >
             {master.compressor ? 'ON' : 'OFF'}
           </button>
@@ -162,7 +162,7 @@ export function MasterSection() {
           min={0}
           max={1}
           displayValue={`${Math.round(master.volume * 100)}%`}
-          onChange={(v) => engine.setMasterVolume(v)}
+          onChange={(v) => transport.setMasterVolume(v)}
         />
         <MasterKnob
           label="Thresh"
@@ -170,7 +170,7 @@ export function MasterSection() {
           min={-60}
           max={0}
           displayValue={`${Math.round(master.threshold)}dB`}
-          onChange={(v) => engine.setCompressorParam('threshold', v)}
+          onChange={(v) => transport.setCompressorParam('threshold', v)}
         />
         <MasterKnob
           label="Ratio"
@@ -178,7 +178,7 @@ export function MasterSection() {
           min={1}
           max={20}
           displayValue={`${master.ratio.toFixed(1)}:1`}
-          onChange={(v) => engine.setCompressorParam('ratio', v)}
+          onChange={(v) => transport.setCompressorParam('ratio', v)}
         />
         <MasterKnob
           label="Knee"
@@ -186,7 +186,7 @@ export function MasterSection() {
           min={0}
           max={40}
           displayValue={`${Math.round(master.knee)}dB`}
-          onChange={(v) => engine.setCompressorParam('knee', v)}
+          onChange={(v) => transport.setCompressorParam('knee', v)}
         />
         <MasterKnob
           label="Attack"
@@ -194,7 +194,7 @@ export function MasterSection() {
           min={0}
           max={1}
           displayValue={`${Math.round(master.attack * 1000)}ms`}
-          onChange={(v) => engine.setCompressorParam('attack', v)}
+          onChange={(v) => transport.setCompressorParam('attack', v)}
         />
         <MasterKnob
           label="Release"
@@ -202,7 +202,7 @@ export function MasterSection() {
           min={0}
           max={1}
           displayValue={`${Math.round(master.release * 1000)}ms`}
-          onChange={(v) => engine.setCompressorParam('release', v)}
+          onChange={(v) => transport.setCompressorParam('release', v)}
         />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { engine } from '../hooks/useEngine';
+import { transport } from '../hooks/useTransport';
 
 interface InitOverlayProps {
   onInit: () => void;
@@ -6,7 +6,7 @@ interface InitOverlayProps {
 
 export function InitOverlay({ onInit }: InitOverlayProps) {
   const handleClick = async () => {
-    await engine.init();
+    await transport.init();
     onInit();
   };
 

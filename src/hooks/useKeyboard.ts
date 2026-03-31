@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import type { InstrumentId } from '../engine/types';
 import { INSTRUMENT_IDS, NUM_STEPS } from '../engine/types';
-import { engine } from './useEngine';
+import { drumEngine } from './useDrum';
+import { transport } from './useTransport';
 
 // Key → instrument index mapping
 // 1-9 = first 9 instruments, 0 = 10th, - = 11th
@@ -59,39 +60,39 @@ export function useKeyboard(state: KeyboardState): void {
       // --- BPM: Up/Down ---
       if (!metaOrCtrl && e.key === 'ArrowUp') {
         e.preventDefault();
-        const snap = engine.getSnapshot();
-        engine.setBpm(snap.transport.bpm + 1);
+        const snap = transport.getSnapshot();
+        transport.setBpm(snap.bpm + 1);
         return;
       }
       if (!metaOrCtrl && e.key === 'ArrowDown') {
         e.preventDefault();
-        const snap = engine.getSnapshot();
-        engine.setBpm(snap.transport.bpm - 1);
+        const snap = transport.getSnapshot();
+        transport.setBpm(snap.bpm - 1);
         return;
       }
 
       // --- Shuffle: Cmd+Up / Cmd+Down ---
       if (metaOrCtrl && e.key === 'ArrowUp') {
         e.preventDefault();
-        const snap = engine.getSnapshot();
-        engine.setShuffle(Math.min(1, snap.transport.shuffle + 0.05));
+        const snap = transport.getSnapshot();
+        transport.setShuffle(Math.min(1, snap.shuffle + 0.05));
         return;
       }
       if (metaOrCtrl && e.key === 'ArrowDown') {
         e.preventDefault();
-        const snap = engine.getSnapshot();
-        engine.setShuffle(Math.max(0, snap.transport.shuffle - 0.05));
+        const snap = transport.getSnapshot();
+        transport.setShuffle(Math.max(0, snap.shuffle - 0.05));
         return;
       }
 
       // --- Play/Stop: Space ---
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
-        const snap = engine.getSnapshot();
-        if (snap.transport.playing) {
-          engine.stop();
+        const snap = transport.getSnapshot();
+        if (snap.playing) {
+          transport.stop();
         } else {
-          engine.play();
+          transport.play();
         }
         return;
       }
@@ -99,14 +100,14 @@ export function useKeyboard(state: KeyboardState): void {
       // --- Toggle step: P ---
       if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
-        engine.toggleStep(selectedInstrument, selectedStep);
+        drumEngine.toggleStep(selectedInstrument, selectedStep);
         return;
       }
 
       // --- Toggle accent: A ---
       if (e.key === 'a' || e.key === 'A') {
         e.preventDefault();
-        engine.toggleAccent(selectedStep);
+        drumEngine.toggleAccent(selectedStep);
         return;
       }
     };

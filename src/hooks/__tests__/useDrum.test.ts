@@ -1,17 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useTransport, usePattern, useInstrumentParams, engine } from '../useEngine';
+import { useDrumPattern, useInstrumentParams } from '../useDrum';
+import { useTransportSnapshot, transport } from '../useTransport';
 
-describe('useEngine hooks', () => {
-  it('useTransport returns transport state', () => {
-    const { result } = renderHook(() => useTransport());
+describe('useDrum hooks', () => {
+  it('useTransportSnapshot returns transport state', () => {
+    const { result } = renderHook(() => useTransportSnapshot());
     expect(result.current.playing).toBe(false);
     expect(result.current.bpm).toBeDefined();
     expect(result.current.currentStep).toBe(0);
   });
 
-  it('usePattern returns pattern state', () => {
-    const { result } = renderHook(() => usePattern());
+  it('useDrumPattern returns pattern state', () => {
+    const { result } = renderHook(() => useDrumPattern());
     expect(result.current.steps.kick.length).toBe(16);
     expect(result.current.accents.length).toBe(16);
   });
@@ -22,12 +23,12 @@ describe('useEngine hooks', () => {
     expect(result.current.tune).toBeDefined();
   });
 
-  it('useTransport updates when transport changes', () => {
-    const { result } = renderHook(() => useTransport());
+  it('useTransportSnapshot updates when transport changes', () => {
+    const { result } = renderHook(() => useTransportSnapshot());
     const initialBpm = result.current.bpm;
 
     act(() => {
-      engine.setBpm(initialBpm === 140 ? 150 : 140);
+      transport.setBpm(initialBpm === 140 ? 150 : 140);
     });
 
     expect(result.current.bpm).not.toBe(initialBpm);

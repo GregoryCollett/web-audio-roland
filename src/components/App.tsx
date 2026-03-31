@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { InstrumentId } from '../engine/types';
-import { usePresets, engine } from '../hooks/useEngine';
+import { useDrumPresets, drumEngine } from '../hooks/useDrum';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { InitOverlay } from './InitOverlay';
 import { Transport } from './Transport';
@@ -16,7 +16,7 @@ export function App() {
   const [initialized, setInitialized] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId>('kick');
   const [selectedStep, setSelectedStep] = useState(0);
-  const presets = usePresets();
+  const presets = useDrumPresets();
 
   useKeyboard({
     selectedInstrument,
@@ -35,17 +35,17 @@ export function App() {
             label="Pattern"
             presets={presets.patterns}
             activeId={presets.activePatternId}
-            onLoad={(id) => engine.loadPatternPreset(id)}
-            onSave={(name) => engine.savePatternPreset(name)}
-            onDelete={(id) => engine.deletePatternPreset(id)}
+            onLoad={(id) => drumEngine.loadPatternPreset(id)}
+            onSave={(name) => drumEngine.savePatternPreset(name)}
+            onDelete={(id) => drumEngine.deletePatternPreset(id)}
           />
           <PresetSelector
             label="Kit"
             presets={presets.kits}
             activeId={presets.activeKitId}
-            onLoad={(id) => engine.loadKitPreset(id)}
-            onSave={(name) => engine.saveKitPreset(name)}
-            onDelete={(id) => engine.deleteKitPreset(id)}
+            onLoad={(id) => drumEngine.loadKitPreset(id)}
+            onSave={(name) => drumEngine.saveKitPreset(name)}
+            onDelete={(id) => drumEngine.deleteKitPreset(id)}
           />
         </div>
         <InstrumentSelector

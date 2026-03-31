@@ -1,5 +1,5 @@
 import type { InstrumentId } from '../engine/types';
-import { usePattern, engine } from '../hooks/useEngine';
+import { useDrumPattern, drumEngine } from '../hooks/useDrum';
 
 const GROUPS = [
   [0, 1, 2, 3],
@@ -28,7 +28,7 @@ interface StepGridProps {
 }
 
 export function StepGrid({ instrument, selectedStep }: StepGridProps) {
-  const pattern = usePattern();
+  const pattern = useDrumPattern();
   const steps = pattern.steps[instrument];
 
   return (
@@ -43,7 +43,7 @@ export function StepGrid({ instrument, selectedStep }: StepGridProps) {
                 className={`step-btn ${
                   steps[step] ? 'step-btn--active' : 'step-btn--inactive'
                 }${step === selectedStep ? ' step-btn--selected' : ''}`}
-                onClick={() => engine.toggleStep(instrument, step)}
+                onClick={() => drumEngine.toggleStep(instrument, step)}
               >
                 {step + 1}
               </button>

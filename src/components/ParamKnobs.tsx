@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { type InstrumentId, TUNABLE_INSTRUMENTS } from '../engine/types';
-import { useInstrumentParams, engine } from '../hooks/useEngine';
+import { useInstrumentParams, drumEngine } from '../hooks/useDrum';
 
 interface KnobProps {
   label: string;
@@ -68,19 +68,19 @@ export function ParamKnobs({ instrument }: ParamKnobsProps) {
       <Knob
         label="Level"
         value={params.level}
-        onChange={(v) => engine.setParam(instrument, 'level', v)}
+        onChange={(v) => drumEngine.setParam(instrument, 'level', v)}
       />
       {hasTune && (
         <Knob
           label="Tune"
           value={params.tune ?? 0.5}
-          onChange={(v) => engine.setParam(instrument, 'tune', v)}
+          onChange={(v) => drumEngine.setParam(instrument, 'tune', v)}
         />
       )}
       <Knob
         label="Decay"
         value={params.decay}
-        onChange={(v) => engine.setParam(instrument, 'decay', v)}
+        onChange={(v) => drumEngine.setParam(instrument, 'decay', v)}
       />
     </div>
   );
