@@ -2,10 +2,14 @@ import type { BassSnapshot, BassPatternPreset, BassSynthPreset, SynthParams, Bas
 import { createDefaultBassPattern, DEFAULT_SYNTH_PARAMS, midiToFreq, NUM_BASS_STEPS } from './bassTypes';
 import { BassPresetStorage } from './bassPresetStorage';
 import type { TransportManager } from '../TransportManager';
+import type { MixerEngine } from '../MixerEngine';
+
+export const BASS_MIXER_CHANNEL = 1;
 
 export class BassEngine {
   private listeners = new Set<() => void>();
   private snapshot: BassSnapshot;
+  private mixer: MixerEngine;
 
   // Persistent synth nodes (created lazily on first tick)
   private oscillator: OscillatorNode | null = null;
@@ -16,7 +20,8 @@ export class BassEngine {
   // Track previous step info for slide
   private prevStep: BassStep | null = null;
 
-  constructor(transport: TransportManager) {
+  constructor(transport: TransportManager, mixer: MixerEngine) {
+    this.mixer = mixer;
     this.snapshot = {
       pattern: createDefaultBassPattern(),
       synth: { ...DEFAULT_SYNTH_PARAMS },
@@ -28,8 +33,10 @@ export class BassEngine {
       },
     };
 
-    transport.registerTickCallback((ctx, dest, time, step) =>
-      this.onTick(ctx, dest, time, step),
+    mixer.assignChannel(BASS_MIXER_CHANNEL, 'TB-303');
+
+    transport.registerTickCallback((ctx, time, step) =>
+      this.onTick(ctx, time, step),
     );
   }
 
@@ -181,7 +188,10 @@ export class BassEngine {
 
   // --- Tick Handler ---
 
-  private onTick(ctx: AudioContext, dest: AudioNode, time: number, step: number): void {
+  private onTick(ctx: AudioContext, time: number, step: number): void {
+    const dest = this.mixer.getChannelInput(BASS_MIXER_CHANNEL);
+    if (!dest) return;
+
     // Lazily create persistent synth nodes on first tick
     if (!this.oscillator || !this.vca) {
       this.oscillator = ctx.createOscillator();

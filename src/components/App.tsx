@@ -11,6 +11,7 @@ import { AccentRow } from './AccentRow';
 import { Playhead } from './Playhead';
 import { MasterSection } from './MasterSection';
 import { BassSection } from './BassSection';
+import { MixerPanel } from './MixerPanel';
 
 export function App() {
   const [initialized, setInitialized] = useState(false);
@@ -55,6 +56,7 @@ export function App() {
           focused={focusPanel === 'bass'}
         />
       </div>
+      <MixerPanel />
       <MasterSection />
     </>
   );

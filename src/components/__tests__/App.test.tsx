@@ -6,12 +6,12 @@ import { App } from '../App';
 describe('App', () => {
   it('renders init overlay on first load', () => {
     render(<App />);
-    expect(screen.getByText('Start TR-909')).toBeDefined();
+    expect(screen.getByText('Start')).toBeDefined();
   });
 
   it('renders transport controls', () => {
     render(<App />);
-    expect(screen.getByText('TR-909')).toBeDefined();
+    expect(screen.getByText('TRANSPORT')).toBeDefined();
     expect(screen.getByText('PLAY')).toBeDefined();
     expect(screen.getByText('STOP')).toBeDefined();
   });

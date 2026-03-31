@@ -18,7 +18,7 @@ export interface TransportSnapshot {
   master: MasterParams;
 }
 
-type TickCallback = (ctx: AudioContext, dest: AudioNode, time: number, step: number) => void;
+type TickCallback = (ctx: AudioContext, time: number, step: number) => void;
 
 const DEFAULT_MASTER: MasterParams = {
   volume: 0.8,
@@ -39,7 +39,10 @@ export class TransportManager {
   // Master chain nodes — created on init()
   private compressorNode: DynamicsCompressorNode | null = null;
   private masterGain: GainNode | null = null;
-  private _outputNode: AudioNode | null = null; // where voices connect to
+
+  // The node that the mixer master bus should connect to
+  // (compressor input when enabled, masterGain when bypassed)
+  private _compressorInput: AudioNode | null = null;
 
   // Registered tick callbacks
   private tickCallbacks = new Set<TickCallback>();
@@ -68,6 +71,8 @@ export class TransportManager {
   };
 
   // --- Tick Callback Registration ---
+  // Tick callbacks no longer receive a dest node — engines get their
+  // channel input from the mixer instead.
 
   registerTickCallback(cb: TickCallback): () => void {
     this.tickCallbacks.add(cb);
@@ -76,8 +81,9 @@ export class TransportManager {
 
   // --- Accessors ---
 
-  getOutputNode(): AudioNode | null {
-    return this._outputNode;
+  /** Returns the node the mixer master bus should connect to */
+  getCompressorInput(): AudioNode | null {
+    return this._compressorInput;
   }
 
   // --- Lifecycle ---
@@ -93,19 +99,21 @@ export class TransportManager {
       new URL('./bass/diodeLadderProcessor.ts', import.meta.url)
     );
 
-    // Build master chain: voices → compressor → masterGain → destination
+    // Build master chain: mixer master → compressor → masterGain → destination
     this.compressorNode = this.ctx.createDynamicsCompressor();
     this.applyCompressorParams();
 
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = this.snapshot.master.volume;
 
-    // Wire up the chain
     this.compressorNode.connect(this.masterGain);
     this.masterGain.connect(this.ctx.destination);
 
-    // Voices connect to the compressor input (compressor enabled by default)
-    this._outputNode = this.compressorNode;
+    this._compressorInput = this.compressorNode;
+  }
+
+  getAudioContext(): AudioContext | null {
+    return this.ctx;
   }
 
   // --- Transport ---
@@ -166,9 +174,9 @@ export class TransportManager {
   private onTick(time: number, step: number): void {
     this.emit({ currentStep: step });
 
-    if (this.ctx && this._outputNode) {
+    if (this.ctx) {
       for (const cb of this.tickCallbacks) {
-        cb(this.ctx, this._outputNode, time, step);
+        cb(this.ctx, time, step);
       }
     }
   }
@@ -188,16 +196,13 @@ export class TransportManager {
   private rewireMasterChain(): void {
     if (!this.ctx || !this.compressorNode || !this.masterGain) return;
 
-    // Disconnect compressor from its current destination
     this.compressorNode.disconnect();
 
     if (this.snapshot.master.compressor) {
-      // voices → compressor → masterGain → destination
       this.compressorNode.connect(this.masterGain);
-      this._outputNode = this.compressorNode;
+      this._compressorInput = this.compressorNode;
     } else {
-      // voices → masterGain → destination (bypass compressor)
-      this._outputNode = this.masterGain;
+      this._compressorInput = this.masterGain;
     }
   }
 

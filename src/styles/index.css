@@ -983,3 +983,164 @@ body {
   gap: 4px;
 }
 
+/* ============================================================
+   Mixer
+   ============================================================ */
+
+.mixer {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.mixer__header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mixer__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.mixer__channels {
+  display: flex;
+  gap: 6px;
+}
+
+.mixer__channel,
+.mixer__master-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mixer__channel--empty {
+  opacity: 0.3;
+}
+
+.mixer__channel-label {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.mixer__fader-track {
+  width: 100%;
+  height: 80px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  position: relative;
+  cursor: grab;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.mixer__fader-track:active {
+  cursor: grabbing;
+}
+
+.mixer__fader-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--accent);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  opacity: 0.6;
+  transition: height 0.05s;
+}
+
+.mixer__channel-db {
+  font-size: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.mixer__pan-knob {
+  width: 100%;
+  height: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.mixer__pan-knob:active {
+  cursor: grabbing;
+}
+
+.mixer__pan-label {
+  font-size: 7px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.mixer__channel-btns {
+  display: flex;
+  gap: 2px;
+}
+
+.mixer__btn {
+  width: 18px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 7px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  transition: background 0.1s, color 0.1s;
+}
+
+.mixer__btn:hover {
+  border-color: var(--text-muted);
+}
+
+.mixer__btn--mute.mixer__btn--active {
+  background: #cc4444;
+  color: #fff;
+  border-color: #cc4444;
+}
+
+.mixer__btn--solo.mixer__btn--active {
+  background: #ccaa00;
+  color: var(--bg-primary);
+  border-color: #ccaa00;
+}
+
+.mixer__master-channel {
+  border-left: 1px solid var(--border);
+  padding-left: 8px;
+  margin-left: 4px;
+}
+
+.mixer__master-channel .mixer__fader-fill {
+  background: var(--text-primary);
+  opacity: 0.4;
+}
+

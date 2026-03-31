@@ -1,9 +1,9 @@
 import { useSyncExternalStore, useRef } from 'react';
 import { DrumEngine } from '../engine/DrumEngine';
 import type { InstrumentId, InstrumentParams, DrumSnapshot } from '../engine/types';
-import { transport } from './useTransport';
+import { transport, mixer } from './useTransport';
 
-export const drumEngine = new DrumEngine(transport);
+export const drumEngine = new DrumEngine(transport, mixer);
 
 export function useDrumPattern(): DrumSnapshot['pattern'] {
   return useSyncExternalStore(drumEngine.subscribe, () => drumEngine.getSnapshot().pattern);

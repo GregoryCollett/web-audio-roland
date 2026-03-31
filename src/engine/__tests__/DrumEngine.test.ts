@@ -1,16 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DrumEngine } from '../DrumEngine';
 import { TransportManager } from '../TransportManager';
+import { MixerEngine } from '../MixerEngine';
 
 describe('DrumEngine', () => {
   let transport: TransportManager;
+  let mixer: MixerEngine;
 
   beforeEach(() => {
     transport = new TransportManager();
+    mixer = new MixerEngine(transport);
   });
 
   it('returns a default snapshot before init', () => {
-    const engine = new DrumEngine(transport);
+    const engine = new DrumEngine(transport, mixer);
     const snap = engine.getSnapshot();
 
     expect(snap.pattern.steps.kick.length).toBe(16);
@@ -22,7 +25,7 @@ describe('DrumEngine', () => {
   });
 
   it('toggleStep flips a step and produces a new snapshot', () => {
-    const engine = new DrumEngine(transport);
+    const engine = new DrumEngine(transport, mixer);
     const snap1 = engine.getSnapshot();
 
     engine.toggleStep('kick', 0);
@@ -34,7 +37,7 @@ describe('DrumEngine', () => {
   });
 
   it('toggleAccent flips an accent', () => {
-    const engine = new DrumEngine(transport);
+    const engine = new DrumEngine(transport, mixer);
 
     engine.toggleAccent(3);
     expect(engine.getSnapshot().pattern.accents[3]).toBe(true);
@@ -44,13 +47,13 @@ describe('DrumEngine', () => {
   });
 
   it('setParam updates instrument params', () => {
-    const engine = new DrumEngine(transport);
+    const engine = new DrumEngine(transport, mixer);
     engine.setParam('kick', 'level', 0.3);
     expect(engine.getSnapshot().instruments.kick.level).toBe(0.3);
   });
 
   it('subscribe notifies on state change', () => {
-    const engine = new DrumEngine(transport);
+    const engine = new DrumEngine(transport, mixer);
     const callback = vi.fn();
 
     const unsub = engine.subscribe(callback);
@@ -64,7 +67,7 @@ describe('DrumEngine', () => {
   });
 
   it('getSnapshot returns same reference when no change', () => {
-    const engine = new DrumEngine(transport);
+    const engine = new DrumEngine(transport, mixer);
     const snap1 = engine.getSnapshot();
     const snap2 = engine.getSnapshot();
     expect(snap1).toBe(snap2);
@@ -74,7 +77,7 @@ describe('DrumEngine', () => {
     beforeEach(() => { localStorage.clear(); });
 
     it('initializes with preset lists from storage', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       const snap = engine.getSnapshot();
       expect(snap.presets.patterns.length).toBeGreaterThan(0);
       expect(snap.presets.kits.length).toBeGreaterThan(0);
@@ -83,7 +86,7 @@ describe('DrumEngine', () => {
     });
 
     it('loadPatternPreset applies steps and accents', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       const presetId = engine.getSnapshot().presets.patterns[0].id;
       const preset = engine.getSnapshot().presets.patterns[0];
       engine.loadPatternPreset(presetId);
@@ -94,7 +97,7 @@ describe('DrumEngine', () => {
     });
 
     it('loadKitPreset applies instrument params', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       const presetId = engine.getSnapshot().presets.kits[0].id;
       const preset = engine.getSnapshot().presets.kits[0];
       engine.loadKitPreset(presetId);
@@ -104,7 +107,7 @@ describe('DrumEngine', () => {
     });
 
     it('savePatternPreset creates a new preset and sets activePatternId', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       engine.toggleStep('kick', 0);
       const beforeCount = engine.getSnapshot().presets.patterns.length;
       engine.savePatternPreset('My Pattern');
@@ -117,7 +120,7 @@ describe('DrumEngine', () => {
     });
 
     it('saveKitPreset creates a new preset and sets activeKitId', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       engine.setParam('kick', 'level', 0.3);
       const beforeCount = engine.getSnapshot().presets.kits.length;
       engine.saveKitPreset('My Kit');
@@ -130,7 +133,7 @@ describe('DrumEngine', () => {
     });
 
     it('deletePatternPreset removes preset and clears activePatternId if active', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       engine.savePatternPreset('To Delete');
       const savedId = engine.getSnapshot().presets.activePatternId!;
       engine.deletePatternPreset(savedId);
@@ -140,7 +143,7 @@ describe('DrumEngine', () => {
     });
 
     it('deleteKitPreset removes preset and clears activeKitId if active', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       engine.saveKitPreset('To Delete');
       const savedId = engine.getSnapshot().presets.activeKitId!;
       engine.deleteKitPreset(savedId);
@@ -150,7 +153,7 @@ describe('DrumEngine', () => {
     });
 
     it('dirty tracking: toggleStep nullifies activePatternId', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       const presetId = engine.getSnapshot().presets.patterns[0].id;
       engine.loadPatternPreset(presetId);
       expect(engine.getSnapshot().presets.activePatternId).toBe(presetId);
@@ -159,7 +162,7 @@ describe('DrumEngine', () => {
     });
 
     it('dirty tracking: toggleAccent nullifies activePatternId', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       const presetId = engine.getSnapshot().presets.patterns[0].id;
       engine.loadPatternPreset(presetId);
       engine.toggleAccent(0);
@@ -167,7 +170,7 @@ describe('DrumEngine', () => {
     });
 
     it('dirty tracking: setParam nullifies activeKitId', () => {
-      const engine = new DrumEngine(transport);
+      const engine = new DrumEngine(transport, mixer);
       const presetId = engine.getSnapshot().presets.kits[0].id;
       engine.loadKitPreset(presetId);
       expect(engine.getSnapshot().presets.activeKitId).toBe(presetId);

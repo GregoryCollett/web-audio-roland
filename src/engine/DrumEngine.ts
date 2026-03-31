@@ -1,23 +1,25 @@
-import {
-  type InstrumentId,
-  type DrumSnapshot,
-  type PatternPreset,
-  type KitPreset,
-  INSTRUMENT_IDS,
-  NUM_STEPS,
-  createDefaultSteps,
-  createDefaultInstruments,
+import type {
+  InstrumentId,
+  DrumSnapshot,
+  PatternPreset,
+  KitPreset,
 } from './types';
+import { INSTRUMENT_IDS, NUM_STEPS, createDefaultSteps, createDefaultInstruments } from './types';
 import { voices, openHat as openHatVoice } from './voices';
 import { PresetStorage } from './presetStorage';
 import type { TransportManager } from './TransportManager';
+import type { MixerEngine } from './MixerEngine';
+
+export const DRUM_MIXER_CHANNEL = 0;
 
 export class DrumEngine {
   private listeners = new Set<() => void>();
   private snapshot: DrumSnapshot;
   private openHatGain: GainNode | null = null;
+  private mixer: MixerEngine;
 
-  constructor(transport: TransportManager) {
+  constructor(transport: TransportManager, mixer: MixerEngine) {
+    this.mixer = mixer;
     this.snapshot = {
       pattern: {
         steps: createDefaultSteps(),
@@ -32,8 +34,10 @@ export class DrumEngine {
       },
     };
 
-    transport.registerTickCallback((ctx, dest, time, step) =>
-      this.onTick(ctx, dest, time, step),
+    mixer.assignChannel(DRUM_MIXER_CHANNEL, 'TR-909');
+
+    transport.registerTickCallback((ctx, time, step) =>
+      this.onTick(ctx, time, step),
     );
   }
 
@@ -153,9 +157,12 @@ export class DrumEngine {
     });
   }
 
-  // --- Tick Callback (called by TransportManager) ---
+  // --- Tick Callback ---
 
-  private onTick(ctx: AudioContext, dest: AudioNode, time: number, step: number): void {
+  private onTick(ctx: AudioContext, time: number, step: number): void {
+    const dest = this.mixer.getChannelInput(DRUM_MIXER_CHANNEL);
+    if (!dest) return;
+
     const accent = this.snapshot.pattern.accents[step];
     for (const id of INSTRUMENT_IDS) {
       if (this.snapshot.pattern.steps[id][step]) {

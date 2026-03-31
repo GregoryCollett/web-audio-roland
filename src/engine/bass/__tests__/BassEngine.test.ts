@@ -1,19 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BassEngine } from '../BassEngine';
 import { TransportManager } from '../../TransportManager';
+import { MixerEngine } from '../../MixerEngine';
 
 describe('BassEngine', () => {
   let transport: TransportManager;
+  let mixer: MixerEngine;
 
   beforeEach(() => {
     localStorage.clear();
     transport = new TransportManager();
+    mixer = new MixerEngine(transport);
   });
 
   // --- State tests ---
 
   it('returns default snapshot', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     const snap = engine.getSnapshot();
 
     expect(snap.pattern.steps.length).toBe(16);
@@ -33,13 +36,13 @@ describe('BassEngine', () => {
   });
 
   it('setNote updates step note', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.setNote(3, 60);
     expect(engine.getSnapshot().pattern.steps[3].note).toBe(60);
   });
 
   it('setNote clamps note to 0-127', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.setNote(0, -5);
     expect(engine.getSnapshot().pattern.steps[0].note).toBe(0);
     engine.setNote(1, 200);
@@ -47,7 +50,7 @@ describe('BassEngine', () => {
   });
 
   it('toggleAccent flips accent', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     expect(engine.getSnapshot().pattern.steps[2].accent).toBe(false);
     engine.toggleAccent(2);
     expect(engine.getSnapshot().pattern.steps[2].accent).toBe(true);
@@ -56,7 +59,7 @@ describe('BassEngine', () => {
   });
 
   it('toggleSlide flips slide', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     expect(engine.getSnapshot().pattern.steps[5].slide).toBe(false);
     engine.toggleSlide(5);
     expect(engine.getSnapshot().pattern.steps[5].slide).toBe(true);
@@ -65,7 +68,7 @@ describe('BassEngine', () => {
   });
 
   it('setGate updates gate type', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.setGate(0, 'note');
     expect(engine.getSnapshot().pattern.steps[0].gate).toBe('note');
     engine.setGate(0, 'tie');
@@ -75,7 +78,7 @@ describe('BassEngine', () => {
   });
 
   it('setSynthParam updates synth params', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.setSynthParam('cutoff', 0.9);
     expect(engine.getSnapshot().synth.cutoff).toBe(0.9);
     engine.setSynthParam('resonance', 0.3);
@@ -85,7 +88,7 @@ describe('BassEngine', () => {
   });
 
   it('setWaveform updates waveform', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     expect(engine.getSnapshot().synth.waveform).toBe('sawtooth');
     engine.setWaveform('square');
     expect(engine.getSnapshot().synth.waveform).toBe('square');
@@ -94,7 +97,7 @@ describe('BassEngine', () => {
   });
 
   it('subscribe notifies on change', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     const callback = vi.fn();
 
     const unsub = engine.subscribe(callback);
@@ -112,7 +115,7 @@ describe('BassEngine', () => {
   // --- Dirty tracking ---
 
   it('pattern edit nullifies activePatternId', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     const presetId = engine.getSnapshot().presets.patterns[0].id;
     engine.loadPatternPreset(presetId);
     expect(engine.getSnapshot().presets.activePatternId).toBe(presetId);
@@ -122,7 +125,7 @@ describe('BassEngine', () => {
   });
 
   it('synth edit nullifies activeSynthId', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     const presetId = engine.getSnapshot().presets.synths[0].id;
     engine.loadSynthPreset(presetId);
     expect(engine.getSnapshot().presets.activeSynthId).toBe(presetId);
@@ -134,7 +137,7 @@ describe('BassEngine', () => {
   // --- Presets ---
 
   it('savePatternPreset creates preset and sets activePatternId', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.setGate(0, 'note');
     engine.setNote(0, 48);
     const beforeCount = engine.getSnapshot().presets.patterns.length;
@@ -150,7 +153,7 @@ describe('BassEngine', () => {
   });
 
   it('saveSynthPreset creates preset and sets activeSynthId', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.setSynthParam('cutoff', 0.9);
     const beforeCount = engine.getSnapshot().presets.synths.length;
 
@@ -165,7 +168,7 @@ describe('BassEngine', () => {
   });
 
   it('loadPatternPreset applies pattern', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     const preset = engine.getSnapshot().presets.patterns[0];
     engine.loadPatternPreset(preset.id);
     const snap = engine.getSnapshot();
@@ -174,7 +177,7 @@ describe('BassEngine', () => {
   });
 
   it('loadSynthPreset applies synth params', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     const preset = engine.getSnapshot().presets.synths[0];
     engine.loadSynthPreset(preset.id);
     const snap = engine.getSnapshot();
@@ -183,7 +186,7 @@ describe('BassEngine', () => {
   });
 
   it('deletePatternPreset removes and clears if active', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.savePatternPreset('To Delete');
     const savedId = engine.getSnapshot().presets.activePatternId!;
 
@@ -195,7 +198,7 @@ describe('BassEngine', () => {
   });
 
   it('deleteSynthPreset removes and clears if active', () => {
-    const engine = new BassEngine(transport);
+    const engine = new BassEngine(transport, mixer);
     engine.saveSynthPreset('To Delete');
     const savedId = engine.getSnapshot().presets.activeSynthId!;
 

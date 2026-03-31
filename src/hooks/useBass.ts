@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
 import { BassEngine } from '../engine/bass/BassEngine';
 import type { BassSnapshot, SynthParams, BassPattern } from '../engine/bass/bassTypes';
-import { transport } from './useTransport';
+import { transport, mixer } from './useTransport';
 
-export const bassEngine = new BassEngine(transport);
+export const bassEngine = new BassEngine(transport, mixer);
 
 export function useBassPattern(): BassPattern {
   return useSyncExternalStore(bassEngine.subscribe, () => bassEngine.getSnapshot().pattern);
