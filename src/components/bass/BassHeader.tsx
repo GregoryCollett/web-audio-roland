@@ -1,5 +1,5 @@
-import { useBassPresets, useBassSynth, bassEngine } from '../hooks/useBass';
-import { PresetSelector } from './PresetSelector';
+import { useBassPresets, useBassSynth, bassEngine } from '../../hooks/useBass';
+import { PresetSelector } from '../shared/PresetSelector';
 
 export function BassHeader() {
   const presets = useBassPresets();

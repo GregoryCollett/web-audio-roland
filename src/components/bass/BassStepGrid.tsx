@@ -1,5 +1,5 @@
-import { useBassPattern, bassEngine } from '../hooks/useBass';
-import { midiToName, NUM_BASS_STEPS } from '../engine/bass/bassTypes';
+import { useBassPattern, bassEngine } from '../../hooks/useBass';
+import { midiToName, NUM_BASS_STEPS } from '../../engine/bass/bassTypes';
 
 interface BassStepGridProps {
   selectedStep: number;

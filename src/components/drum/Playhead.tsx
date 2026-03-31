@@ -1,4 +1,4 @@
-import { useTransportSnapshot } from '../hooks/useTransport';
+import { useTransportSnapshot } from '../../hooks/useTransport';
 
 const GROUPS = [
   [0, 1, 2, 3],

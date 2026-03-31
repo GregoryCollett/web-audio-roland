@@ -1,5 +1,5 @@
-import { useDrumPresets, drumEngine } from '../hooks/useDrum';
-import { PresetSelector } from './PresetSelector';
+import { useDrumPresets, drumEngine } from '../../hooks/useDrum';
+import { PresetSelector } from '../shared/PresetSelector';
 
 export function DrumHeader() {
   const presets = useDrumPresets();

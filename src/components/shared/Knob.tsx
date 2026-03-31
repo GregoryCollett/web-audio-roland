@@ -1,17 +1,20 @@
 import { useCallback, useRef } from 'react';
-import { type InstrumentId, TUNABLE_INSTRUMENTS } from '../engine/types';
-import { useInstrumentParams, drumEngine } from '../hooks/useDrum';
 
-interface KnobProps {
+export interface KnobProps {
   label: string;
   value: number;
+  min?: number;
+  max?: number;
+  displayValue?: string;
   onChange: (value: number) => void;
+  size?: 'small' | 'medium';
 }
 
-function Knob({ label, value, onChange }: KnobProps) {
+export function Knob({ label, value, min = 0, max = 1, displayValue, onChange, size = 'medium' }: KnobProps) {
   const dragging = useRef(false);
   const startY = useRef(0);
   const startValue = useRef(0);
+  const range = max - min;
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -21,8 +24,8 @@ function Knob({ label, value, onChange }: KnobProps) {
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!dragging.current) return;
-        const delta = (startY.current - e.clientY) / 150;
-        const newValue = Math.max(0, Math.min(1, startValue.current + delta));
+        const delta = ((startY.current - e.clientY) / 150) * range;
+        const newValue = Math.max(min, Math.min(max, startValue.current + delta));
         onChange(newValue);
       };
 
@@ -35,53 +38,27 @@ function Knob({ label, value, onChange }: KnobProps) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     },
-    [value, onChange],
+    [value, min, max, range, onChange],
   );
 
-  const arcDeg = value * 280;
+  const normalized = (value - min) / range;
+  const arcDeg = normalized * 280;
   const background = `conic-gradient(from 220deg, var(--accent) 0deg, var(--accent) ${arcDeg}deg, var(--border) ${arcDeg}deg)`;
 
+  const sizeClass = size === 'small' ? ' knob--small' : '';
+
   return (
-    <div className="knob">
+    <div className={`knob${sizeClass}`}>
       <div
         className="knob__dial"
         style={{ background }}
         onMouseDown={handleMouseDown}
+        title={`${label}${displayValue ? `: ${displayValue}` : ''}`}
       >
         <div className="knob__center" />
       </div>
+      {displayValue && <span className="knob__value">{displayValue}</span>}
       <span className="knob__label">{label}</span>
-    </div>
-  );
-}
-
-interface ParamKnobsProps {
-  instrument: InstrumentId;
-}
-
-export function ParamKnobs({ instrument }: ParamKnobsProps) {
-  const params = useInstrumentParams(instrument);
-  const hasTune = TUNABLE_INSTRUMENTS.has(instrument);
-
-  return (
-    <div className="param-knobs">
-      <Knob
-        label="Level"
-        value={params.level}
-        onChange={(v) => drumEngine.setParam(instrument, 'level', v)}
-      />
-      {hasTune && (
-        <Knob
-          label="Tune"
-          value={params.tune ?? 0.5}
-          onChange={(v) => drumEngine.setParam(instrument, 'tune', v)}
-        />
-      )}
-      <Knob
-        label="Decay"
-        value={params.decay}
-        onChange={(v) => drumEngine.setParam(instrument, 'decay', v)}
-      />
     </div>
   );
 }

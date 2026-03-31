@@ -1,54 +1,6 @@
-import { useState, useCallback, useRef } from 'react';
-import { useTransportSnapshot, transport } from '../hooks/useTransport';
-
-function ShuffleKnob({ value }: { value: number }) {
-  const dragging = useRef(false);
-  const startY = useRef(0);
-  const startValue = useRef(0);
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      dragging.current = true;
-      startY.current = e.clientY;
-      startValue.current = value;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!dragging.current) return;
-        const delta = (startY.current - e.clientY) / 150;
-        const newValue = Math.max(0, Math.min(1, startValue.current + delta));
-        transport.setShuffle(newValue);
-      };
-
-      const handleMouseUp = () => {
-        dragging.current = false;
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    },
-    [value],
-  );
-
-  const arcDeg = value * 280;
-  const background = `conic-gradient(from 220deg, var(--accent) 0deg, var(--accent) ${arcDeg}deg, var(--border) ${arcDeg}deg)`;
-  const pct = Math.round(value * 100);
-
-  return (
-    <div className="transport__shuffle">
-      <div
-        className="transport__shuffle-dial"
-        style={{ background }}
-        onMouseDown={handleMouseDown}
-        title={`Shuffle: ${pct}%`}
-      >
-        <div className="transport__shuffle-center" />
-      </div>
-      <span className="transport__shuffle-label">SFL {pct}%</span>
-    </div>
-  );
-}
+import { useState, useCallback } from 'react';
+import { useTransportSnapshot, transport } from '../../hooks/useTransport';
+import { Knob } from '../shared/Knob';
 
 export function Transport() {
   const snap = useTransportSnapshot();
@@ -101,7 +53,12 @@ export function Transport() {
           </div>
         )}
         <span className="transport__bpm-label">BPM</span>
-        <ShuffleKnob value={snap.shuffle} />
+        <Knob
+          label={`SFL ${Math.round(snap.shuffle * 100)}%`}
+          value={snap.shuffle}
+          onChange={(v) => transport.setShuffle(v)}
+          size="small"
+        />
         <button
           className="transport__btn transport__btn--play"
           onClick={() => transport.play()}

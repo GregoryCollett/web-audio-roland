@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import type { InstrumentId } from '../engine/types';
 import { useKeyboard } from '../hooks/useKeyboard';
-import { InitOverlay } from './InitOverlay';
-import { Transport } from './Transport';
-import { DrumHeader } from './DrumHeader';
-import { InstrumentSelector } from './InstrumentSelector';
-import { ParamKnobs } from './ParamKnobs';
-import { StepGrid } from './StepGrid';
-import { AccentRow } from './AccentRow';
-import { Playhead } from './Playhead';
-import { MasterSection } from './MasterSection';
-import { BassSection } from './BassSection';
-import { MixerPanel } from './MixerPanel';
+import { InitOverlay } from './shared/InitOverlay';
+import { Transport } from './transport/Transport';
+import { DrumHeader } from './drum/DrumHeader';
+import { InstrumentSelector } from './drum/InstrumentSelector';
+import { ParamKnobs } from './drum/ParamKnobs';
+import { StepGrid } from './drum/StepGrid';
+import { AccentRow } from './drum/AccentRow';
+import { Playhead } from './drum/Playhead';
+import { MasterSection } from './master/MasterSection';
+import { BassSection } from './bass/BassSection';
+import { MixerPanel } from './mixer/MixerPanel';
 
 export function App() {
   const [initialized, setInitialized] = useState(false);

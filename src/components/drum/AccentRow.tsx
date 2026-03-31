@@ -1,4 +1,4 @@
-import { useDrumPattern, drumEngine } from '../hooks/useDrum';
+import { useDrumPattern, drumEngine } from '../../hooks/useDrum';
 
 const GROUPS = [
   [0, 1, 2, 3],

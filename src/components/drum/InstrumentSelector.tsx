@@ -1,4 +1,4 @@
-import { INSTRUMENT_IDS, type InstrumentId } from '../engine/types';
+import { INSTRUMENT_IDS, type InstrumentId } from '../../engine/types';
 
 const DISPLAY_NAMES: Record<InstrumentId, string> = {
   kick: 'BD',

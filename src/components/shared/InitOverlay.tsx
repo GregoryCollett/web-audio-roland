@@ -1,4 +1,4 @@
-import { transport, mixer } from '../hooks/useTransport';
+import { transport, mixer } from '../../hooks/useTransport';
 
 interface InitOverlayProps {
   onInit: () => void;

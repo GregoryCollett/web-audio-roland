@@ -285,6 +285,25 @@ body {
   text-transform: uppercase;
 }
 
+.knob__value {
+  display: block;
+  font-size: 9px;
+  color: var(--accent);
+  text-align: center;
+}
+
+.knob--small .knob__dial {
+  width: 36px;
+  height: 36px;
+}
+
+.knob--small .knob__center {
+  width: 14px;
+  height: 14px;
+  top: 11px;
+  left: 11px;
+}
+
 /* Step Grid */
 .step-grid {
   margin-bottom: 12px;

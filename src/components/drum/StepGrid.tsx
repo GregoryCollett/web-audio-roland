@@ -1,5 +1,5 @@
-import type { InstrumentId } from '../engine/types';
-import { useDrumPattern, drumEngine } from '../hooks/useDrum';
+import type { InstrumentId } from '../../engine/types';
+import { useDrumPattern, drumEngine } from '../../hooks/useDrum';
 
 const GROUPS = [
   [0, 1, 2, 3],
