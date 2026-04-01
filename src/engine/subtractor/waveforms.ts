@@ -251,7 +251,7 @@ function buildFormant(ctx: AudioContext, formants: number[][]): PeriodicWave {
   const [real, imag] = makeArrays(HARMONICS);
   for (let n = 1; n < HARMONICS; n++) {
     const freq = n * fundamental;
-    let saw = 1 / n; // base sawtooth
+    const saw = 1 / n; // base sawtooth
     let boost = 1.0;
     for (const [center, bw, gain] of formants) {
       const dist = Math.abs(freq - center);
@@ -281,7 +281,7 @@ function buildChoir(ctx: AudioContext): PeriodicWave {
   ];
   for (let n = 1; n < HARMONICS; n++) {
     const freq = n * fundamental;
-    let saw = 1 / n;
+    const saw = 1 / n;
     let boost = 1.0;
     for (const [center, bw, gain] of formants) {
       const dist = Math.abs(freq - center);
