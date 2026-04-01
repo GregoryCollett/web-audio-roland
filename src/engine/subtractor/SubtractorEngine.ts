@@ -11,6 +11,7 @@ import {
   createDefaultSubtractorPattern,
   DEFAULT_SUBTRACTOR_PARAMS,
   NUM_SUBTRACTOR_STEPS,
+  FILTER1_MODES,
   midiToFreq,
   adsrTimeMap,
 } from './subtractorTypes';
@@ -53,6 +54,8 @@ export class SubtractorEngine {
 
   // Track previous step for slide/portamento logic
   private prevNote: number | null = null;
+  private prevOsc1Freq = 440;
+  private prevOsc2Freq = 440;
 
   constructor(transport: TransportManager, mixer: MixerEngine) {
     this.mixer = mixer;
@@ -150,6 +153,7 @@ export class SubtractorEngine {
         this.applyWaveform(oscNode, value as number);
       }
     }
+    this.applyLiveParams();
   }
 
   private applyWaveform(osc: OscillatorNode, waveformIndex: number): void {
@@ -170,6 +174,7 @@ export class SubtractorEngine {
       },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setFilter1Mode(mode: Filter1Mode): void {
@@ -177,6 +182,7 @@ export class SubtractorEngine {
       params: { ...this.snapshot.params, filter1Mode: mode },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setAmpEnv(param: keyof ADSRParams, value: number): void {
@@ -225,6 +231,7 @@ export class SubtractorEngine {
       },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setModSlot(index: number, slot: ModSlot): void {
@@ -252,6 +259,7 @@ export class SubtractorEngine {
       params: { ...this.snapshot.params, fmAmount: value },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setRingModLevel(value: number): void {
@@ -259,6 +267,7 @@ export class SubtractorEngine {
       params: { ...this.snapshot.params, ringModLevel: value },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setNoiseLevel(value: number): void {
@@ -266,6 +275,7 @@ export class SubtractorEngine {
       params: { ...this.snapshot.params, noiseLevel: value },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setOscMix(value: number): void {
@@ -273,6 +283,7 @@ export class SubtractorEngine {
       params: { ...this.snapshot.params, oscMix: value },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   setVolume(value: number): void {
@@ -280,6 +291,7 @@ export class SubtractorEngine {
       params: { ...this.snapshot.params, volume: value },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+    this.applyLiveParams();
   }
 
   // ---------------------------------------------------------------------------
@@ -418,13 +430,13 @@ export class SubtractorEngine {
     const hasPrevNote = this.prevNote !== null;
 
     if (portMode === 'on' || (portMode === 'auto' && hasPrevNote && seqStep.slide)) {
-      // Glide to new frequency
+      // Glide from previous target frequency to new
       this.osc1!.frequency.cancelScheduledValues(time);
-      this.osc1!.frequency.setValueAtTime(this.osc1!.frequency.value, time);
+      this.osc1!.frequency.setValueAtTime(this.prevOsc1Freq, time);
       this.osc1!.frequency.exponentialRampToValueAtTime(Math.max(1, freq1), time + portTime);
 
       this.osc2!.frequency.cancelScheduledValues(time);
-      this.osc2!.frequency.setValueAtTime(this.osc2!.frequency.value, time);
+      this.osc2!.frequency.setValueAtTime(this.prevOsc2Freq, time);
       this.osc2!.frequency.exponentialRampToValueAtTime(Math.max(1, freq2), time + portTime);
     } else {
       this.osc1!.frequency.cancelScheduledValues(time);
@@ -433,6 +445,9 @@ export class SubtractorEngine {
       this.osc2!.frequency.cancelScheduledValues(time);
       this.osc2!.frequency.setValueAtTime(Math.max(1, freq2), time);
     }
+
+    this.prevOsc1Freq = Math.max(1, freq1);
+    this.prevOsc2Freq = Math.max(1, freq2);
 
     // --- Oscillator mix ---
     const osc1Level = params.osc1.level * (1 - params.oscMix);
@@ -703,6 +718,63 @@ export class SubtractorEngine {
   // ---------------------------------------------------------------------------
   // Internal
   // ---------------------------------------------------------------------------
+
+  /** Apply current snapshot params to all live audio nodes.
+   *  Safe to call before nodes are created (no-ops if null). */
+  private applyLiveParams(): void {
+    if (!this.audioCtx) return; // nodes not created yet
+    const p = this.snapshot.params;
+    const now = this.audioCtx.currentTime;
+
+    // Osc gains
+    if (this.osc1Gain) this.osc1Gain.gain.setTargetAtTime(p.osc1.level * (1 - p.oscMix), now, 0.01);
+    if (this.osc2Gain) this.osc2Gain.gain.setTargetAtTime(p.osc2.level * p.oscMix, now, 0.01);
+
+    // Noise, ring mod, FM
+    if (this.noiseGain) this.noiseGain.gain.setTargetAtTime(p.noiseLevel, now, 0.01);
+    if (this.ringModGain) this.ringModGain.gain.value = p.ringModLevel;
+    if (this.fmGain) this.fmGain.gain.setTargetAtTime(p.fmAmount * 200, now, 0.01);
+
+    // Filter 1 mode + cutoff/resonance
+    const f1CutoffHz = 20 * Math.pow(1000, p.filter1.cutoff);
+    const f2CutoffHz = 20 * Math.pow(1000, p.filter2.cutoff);
+
+    if (this.useFilter1Worklet && this.filter1 && 'parameters' in this.filter1) {
+      const modeIndex = FILTER1_MODES.indexOf(p.filter1Mode);
+      const modeParam = this.filter1.parameters.get('mode');
+      if (modeParam) modeParam.value = modeIndex >= 0 ? modeIndex : 0;
+
+      const freq = this.filter1.parameters.get('frequency');
+      const res = this.filter1.parameters.get('resonance');
+      if (freq) freq.setTargetAtTime(Math.max(20, f1CutoffHz), now, 0.01);
+      if (res) res.setTargetAtTime(Math.min(4, p.filter1.resonance * 4), now, 0.01);
+    } else if (this.filter1 && 'frequency' in this.filter1) {
+      (this.filter1 as BiquadFilterNode).frequency.setTargetAtTime(Math.max(20, f1CutoffHz), now, 0.01);
+      (this.filter1 as BiquadFilterNode).Q.value = p.filter1.resonance * 20;
+    }
+
+    if (this.useFilter2Worklet && this.filter2 && 'parameters' in this.filter2) {
+      const freq = this.filter2.parameters.get('frequency');
+      const res = this.filter2.parameters.get('resonance');
+      if (freq) freq.setTargetAtTime(Math.max(20, f2CutoffHz), now, 0.01);
+      if (res) res.setTargetAtTime(Math.min(2, p.filter2.resonance * 2), now, 0.01);
+    } else if (this.filter2 && 'frequency' in this.filter2) {
+      (this.filter2 as BiquadFilterNode).frequency.setTargetAtTime(Math.max(20, f2CutoffHz), now, 0.01);
+      (this.filter2 as BiquadFilterNode).Q.value = p.filter2.resonance * 20;
+    }
+
+    // LFO rates and waveforms
+    if (this.lfo1) {
+      this.lfo1.frequency.value = 0.1 * Math.pow(200, p.lfo1.rate);
+      const wf = p.lfo1.waveform === 'random' ? 'square' : p.lfo1.waveform;
+      if (this.lfo1.type !== wf) this.lfo1.type = wf as OscillatorType;
+    }
+    if (this.lfo2) {
+      this.lfo2.frequency.value = 0.1 * Math.pow(200, p.lfo2.rate);
+      const wf = p.lfo2.waveform === 'random' ? 'square' : p.lfo2.waveform;
+      if (this.lfo2.type !== wf) this.lfo2.type = wf as OscillatorType;
+    }
+  }
 
   private applyModMatrix(params: SubtractorSnapshot['params'], _velocity: number, _time: number): void {
     // Update LFO frequencies
