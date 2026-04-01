@@ -14,7 +14,11 @@
       "Bash(npm run:*)",
       "Bash(git stash:*)",
       "Bash(ls:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git push:*)",
+      "Bash(npx vite:*)",
+      "Bash(grep:*)",
+      "Bash(node:*)"
     ]
   }
 }

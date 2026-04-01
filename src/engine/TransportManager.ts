@@ -95,12 +95,9 @@ export class TransportManager {
       await this.ctx.resume();
     }
 
-    await this.ctx.audioWorklet.addModule(
-      new URL('./bass/diodeLadderProcessor.ts', import.meta.url)
-    );
-    await this.ctx.audioWorklet.addModule(
-      new URL('./synth/ir3109Processor.ts', import.meta.url)
-    );
+    const base = import.meta.env.BASE_URL ?? '/';
+    await this.ctx.audioWorklet.addModule(`${base}worklets/diode-ladder-processor.js`);
+    await this.ctx.audioWorklet.addModule(`${base}worklets/ir3109-processor.js`);
 
     // Build master chain: mixer master → compressor → masterGain → destination
     this.compressorNode = this.ctx.createDynamicsCompressor();
