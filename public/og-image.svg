@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0d0d1a"/>
+
+  <!-- Title -->
+  <text x="600" y="200" text-anchor="middle" font-family="SF Mono, Fira Code, monospace" font-size="72" font-weight="700" fill="#ff6b35" letter-spacing="6">WEB AUDIO ROLAND</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="260" text-anchor="middle" font-family="SF Mono, Fira Code, monospace" font-size="24" fill="#666" letter-spacing="4">DRUM MACHINE &amp; SYNTHESIZER WORKSTATION</text>
+
+  <!-- Step sequencer visualization -->
+  <g transform="translate(200, 320)">
+    <!-- 16 steps -->
+    <rect x="0" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+    <rect x="50" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="100" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="150" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+
+    <rect x="220" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+    <rect x="270" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="320" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+    <rect x="370" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+
+    <rect x="440" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+    <rect x="490" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="540" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="590" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+
+    <rect x="660" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="710" y="0" width="44" height="36" rx="4" fill="#ff6b35"/>
+    <rect x="760" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+    <rect x="810" y="0" width="44" height="36" rx="4" fill="#2a2a3e"/>
+
+    <!-- Playhead -->
+    <rect x="0" y="44" width="44" height="4" rx="2" fill="#ff6b35" opacity="0.8"/>
+  </g>
+
+  <!-- Waveform -->
+  <path d="M200 460 L260 410 L260 460 L320 410 L320 460 L380 410 L380 460 L440 410 L440 460 L500 410 L500 460 L560 410 L560 460 L620 410 L620 460 L680 410 L680 460 L740 410 L740 460 L800 410 L800 460 L860 410 L860 460 L920 410 L920 460 L980 410 L980 460"
+        stroke="#ff6b35" stroke-width="2.5" fill="none" opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Module labels -->
+  <text x="300" y="550" text-anchor="middle" font-family="SF Mono, Fira Code, monospace" font-size="18" font-weight="700" fill="#ff6b35" opacity="0.7">GC-909</text>
+  <text x="600" y="550" text-anchor="middle" font-family="SF Mono, Fira Code, monospace" font-size="18" font-weight="700" fill="#ff6b35" opacity="0.7">GC-303</text>
+  <text x="900" y="550" text-anchor="middle" font-family="SF Mono, Fira Code, monospace" font-size="18" font-weight="700" fill="#ff6b35" opacity="0.7">GC-2</text>
+
+  <!-- Divider dots -->
+  <circle cx="450" cy="546" r="3" fill="#333"/>
+  <circle cx="750" cy="546" r="3" fill="#333"/>
+</svg>
