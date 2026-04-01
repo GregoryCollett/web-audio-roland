@@ -251,10 +251,10 @@ export class BassEngine {
     if (prevHadSlide) {
       this.oscillator.frequency.cancelScheduledValues(time);
       this.oscillator.frequency.setValueAtTime(this.oscillator.frequency.value, time);
-      this.oscillator.frequency.exponentialRampToValueAtTime(freq, time + 0.06);
+      this.oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, freq), time + 0.06);
     } else {
       this.oscillator.frequency.cancelScheduledValues(time);
-      this.oscillator.frequency.setValueAtTime(freq, time);
+      this.oscillator.frequency.setValueAtTime(Math.max(1, freq), time);
     }
 
     // Filter envelope
@@ -267,11 +267,12 @@ export class BassEngine {
       const resParam = this.filter.parameters.get('resonance');
       if (freqParam) {
         freqParam.cancelScheduledValues(time);
-        freqParam.setValueAtTime(Math.min(20000, baseCutoffHz + envAmount), time);
+        freqParam.setValueAtTime(Math.max(20, Math.min(20000, baseCutoffHz + envAmount)), time);
         freqParam.setTargetAtTime(Math.max(20, baseCutoffHz), time, decayTime / 3);
       }
       if (resParam) {
-        resParam.setValueAtTime(synth.resonance * 4, time);
+        resParam.cancelScheduledValues(time);
+        resParam.setValueAtTime(Math.min(4, synth.resonance * 4), time);
       }
     } else if (this.filter instanceof BiquadFilterNode) {
       this.filter.frequency.cancelScheduledValues(time);

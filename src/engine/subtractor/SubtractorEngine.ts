@@ -454,7 +454,7 @@ export class SubtractorEngine {
     const f1Cutoff = params.filter1.cutoff;
     const baseCutoff1Hz = 20 * Math.pow(1000, f1Cutoff);
     const envDepth = params.filterEnvDepth;
-    const filterPeak1 = Math.min(20000, baseCutoff1Hz * (1 + Math.max(0, envDepth) * 10));
+    const filterPeak1 = Math.max(20, Math.min(20000, baseCutoff1Hz * (1 + Math.max(0, envDepth) * 10)));
     const fSustainHz1 = Math.max(20, baseCutoff1Hz * (params.filterEnv.sustain + 0.1));
 
     const fAttack  = adsrTimeMap(params.filterEnv.attack);
@@ -476,7 +476,8 @@ export class SubtractorEngine {
         freqParam.setTargetAtTime(fSustainHz1, time + fAttack, fDecay / 3);
       }
       if (resParam) {
-        resParam.setValueAtTime(params.filter1.resonance * 4, time);
+        resParam.cancelScheduledValues(time);
+        resParam.setValueAtTime(Math.min(4, params.filter1.resonance * 4), time);
       }
     } else if (this.filter1 instanceof BiquadFilterNode) {
       this.filter1.frequency.cancelScheduledValues(time);
@@ -495,9 +496,16 @@ export class SubtractorEngine {
     if (this.useFilter2Worklet && this.filter2 instanceof AudioWorkletNode) {
       const freqParam = this.filter2.parameters.get('frequency');
       const resParam  = this.filter2.parameters.get('resonance');
-      if (freqParam) freqParam.setValueAtTime(trackedCutoff2, time);
-      if (resParam)  resParam.setValueAtTime(params.filter2.resonance * 2, time);
+      if (freqParam) {
+        freqParam.cancelScheduledValues(time);
+        freqParam.setValueAtTime(trackedCutoff2, time);
+      }
+      if (resParam) {
+        resParam.cancelScheduledValues(time);
+        resParam.setValueAtTime(params.filter2.resonance * 2, time);
+      }
     } else if (this.filter2 instanceof BiquadFilterNode) {
+      this.filter2.frequency.cancelScheduledValues(time);
       this.filter2.frequency.setValueAtTime(trackedCutoff2, time);
       this.filter2.Q.value = params.filter2.resonance * 20;
     }

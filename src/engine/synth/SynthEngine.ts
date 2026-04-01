@@ -425,7 +425,7 @@ export class SynthEngine {
     // --- Filter envelope ---
     const baseCutoffHz = 20 * Math.pow(1000, params.cutoff);
     const envDepth = params.filterEnvDepth * (1 + accentBoost * 1.5);
-    const filterPeak = Math.min(20000, baseCutoffHz * (1 + envDepth * 10));
+    const filterPeak = Math.max(20, Math.min(20000, baseCutoffHz * (1 + Math.max(0, envDepth) * 10)));
 
     const fAttack  = adsrTimeMap(params.filterEnv.attack);
     const fDecay   = adsrTimeMap(params.filterEnv.decay);
@@ -443,7 +443,8 @@ export class SynthEngine {
         freqParam.setTargetAtTime(fSustainHz, time + fAttack, fDecay / 3);
       }
       if (resParam) {
-        resParam.setValueAtTime(params.resonance * 4, time);
+        resParam.cancelScheduledValues(time);
+        resParam.setValueAtTime(Math.min(4, params.resonance * 4), time);
       }
     } else if (this.filter instanceof BiquadFilterNode) {
       this.filter.frequency.cancelScheduledValues(time);
