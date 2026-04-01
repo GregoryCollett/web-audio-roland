@@ -438,9 +438,8 @@ export class SynthEngine {
       const resParam  = this.filter.parameters.get('resonance');
       if (freqParam) {
         freqParam.cancelScheduledValues(time);
-        freqParam.setValueAtTime(Math.max(20, baseCutoffHz), time);
-        freqParam.linearRampToValueAtTime(filterPeak, time + fAttack);
-        freqParam.setTargetAtTime(fSustainHz, time + fAttack, fDecay / 3);
+        freqParam.setTargetAtTime(filterPeak, time, Math.max(0.003, fAttack / 3));
+        freqParam.setTargetAtTime(fSustainHz, time + fAttack, Math.max(0.003, fDecay / 3));
       }
       if (resParam) {
         resParam.cancelScheduledValues(time);
@@ -448,9 +447,8 @@ export class SynthEngine {
       }
     } else if (this.filter instanceof BiquadFilterNode) {
       this.filter.frequency.cancelScheduledValues(time);
-      this.filter.frequency.setValueAtTime(Math.max(20, baseCutoffHz), time);
-      this.filter.frequency.linearRampToValueAtTime(filterPeak, time + fAttack);
-      this.filter.frequency.setTargetAtTime(fSustainHz, time + fAttack, fDecay / 3);
+      this.filter.frequency.setTargetAtTime(filterPeak, time, Math.max(0.003, fAttack / 3));
+      this.filter.frequency.setTargetAtTime(fSustainHz, time + fAttack, Math.max(0.003, fDecay / 3));
       this.filter.Q.value = params.resonance * 20;
     }
 
@@ -465,11 +463,11 @@ export class SynthEngine {
     const aRelease = adsrTimeMap(params.ampEnv.release);
 
     this.vca!.gain.cancelScheduledValues(time);
-    this.vca!.gain.setValueAtTime(this.vca!.gain.value, time);
-    this.vca!.gain.linearRampToValueAtTime(vcaLevel, time + Math.max(0.003, aAttack));
-    this.vca!.gain.setTargetAtTime(aSustain, time + Math.max(0.003, aAttack), aDecay / 3);
-
-    // Schedule release
+    // Attack: ramp smoothly from wherever gain currently is to peak
+    this.vca!.gain.setTargetAtTime(vcaLevel, time, Math.max(0.003, aAttack / 3));
+    // Decay: after attack settles, decay to sustain
+    this.vca!.gain.setTargetAtTime(aSustain, time + aAttack, Math.max(0.003, aDecay / 3));
+    // Release: after step ends, fade to zero
     const stepDuration = 0.125;
     this.vca!.gain.setTargetAtTime(0, time + stepDuration, Math.max(0.003, aRelease / 3));
 

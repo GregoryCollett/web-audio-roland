@@ -267,26 +267,26 @@ export class BassEngine {
       const resParam = this.filter.parameters.get('resonance');
       if (freqParam) {
         freqParam.cancelScheduledValues(time);
-        freqParam.setValueAtTime(Math.max(20, Math.min(20000, baseCutoffHz + envAmount)), time);
-        freqParam.setTargetAtTime(Math.max(20, baseCutoffHz), time, decayTime / 3);
+        // Fast attack (1ms) to filter peak, then decay to base cutoff
+        freqParam.setTargetAtTime(Math.max(20, Math.min(20000, baseCutoffHz + envAmount)), time, 0.001);
+        freqParam.setTargetAtTime(Math.max(20, baseCutoffHz), time + 0.005, Math.max(0.003, decayTime / 3));
       }
       if (resParam) {
         resParam.cancelScheduledValues(time);
-        resParam.setValueAtTime(Math.min(4, synth.resonance * 4), time);
+        resParam.setTargetAtTime(Math.min(4, synth.resonance * 4), time, 0.001);
       }
     } else if (this.filter instanceof BiquadFilterNode) {
       this.filter.frequency.cancelScheduledValues(time);
-      this.filter.frequency.setValueAtTime(Math.min(20000, baseCutoffHz + envAmount), time);
-      this.filter.frequency.setTargetAtTime(Math.max(20, baseCutoffHz), time, decayTime / 3);
+      this.filter.frequency.setTargetAtTime(Math.min(20000, baseCutoffHz + envAmount), time, 0.001);
+      this.filter.frequency.setTargetAtTime(Math.max(20, baseCutoffHz), time + 0.005, Math.max(0.003, decayTime / 3));
       this.filter.Q.value = synth.resonance * 20;
     }
 
-    // VCA envelope — use short ramp to avoid click
+    // VCA envelope — setTargetAtTime ramps smoothly from wherever gain is
     const vcaLevel = synth.volume * (1 + accentBoost * 0.5);
     this.vca.gain.cancelScheduledValues(time);
-    this.vca.gain.setValueAtTime(this.vca.gain.value, time);
-    this.vca.gain.linearRampToValueAtTime(vcaLevel, time + 0.003);
-    this.vca.gain.setTargetAtTime(0, time + 0.01, decayTime / 3);
+    this.vca.gain.setTargetAtTime(vcaLevel, time, 0.003);
+    this.vca.gain.setTargetAtTime(0, time + 0.01, Math.max(0.003, decayTime / 3));
 
     this.prevStep = bassStep;
   }

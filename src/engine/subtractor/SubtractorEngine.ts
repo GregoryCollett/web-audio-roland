@@ -454,8 +454,6 @@ export class SubtractorEngine {
     const f1Cutoff = params.filter1.cutoff;
     const baseCutoff1Hz = 20 * Math.pow(1000, f1Cutoff);
     const envDepth = params.filterEnvDepth;
-    const filterPeak1 = Math.max(20, Math.min(20000, baseCutoff1Hz * (1 + Math.max(0, envDepth) * 10)));
-    const fSustainHz1 = Math.max(20, baseCutoff1Hz * (params.filterEnv.sustain + 0.1));
 
     const fAttack  = adsrTimeMap(params.filterEnv.attack);
     const fDecay   = adsrTimeMap(params.filterEnv.decay);
@@ -464,26 +462,27 @@ export class SubtractorEngine {
 
     // Keyboard tracking: adjust cutoff based on note relative to C4 (MIDI 60)
     const keyTrackOffset1 = (seqStep.note - 60) * params.filter1.keyTrack * 0.01;
-    const trackedCutoff1 = Math.min(20000, Math.max(20, baseCutoff1Hz * Math.pow(2, keyTrackOffset1)));
+    const trackedCutoff1Hz = Math.min(20000, Math.max(20, baseCutoff1Hz * Math.pow(2, keyTrackOffset1)));
+    // Use tracked cutoff as the base for filter envelope calculations
+    const filterPeak1Tracked = Math.max(20, Math.min(20000, trackedCutoff1Hz * (1 + Math.max(0, envDepth) * 10)));
+    const fSustainHz1Tracked = Math.max(20, trackedCutoff1Hz * (params.filterEnv.sustain + 0.1));
 
     if (this.useFilter1Worklet && this.filter1 instanceof AudioWorkletNode) {
       const freqParam = this.filter1.parameters.get('frequency');
       const resParam  = this.filter1.parameters.get('resonance');
       if (freqParam) {
         freqParam.cancelScheduledValues(time);
-        freqParam.setValueAtTime(Math.max(20, trackedCutoff1), time);
-        freqParam.linearRampToValueAtTime(filterPeak1, time + fAttack);
-        freqParam.setTargetAtTime(fSustainHz1, time + fAttack, fDecay / 3);
+        freqParam.setTargetAtTime(filterPeak1Tracked, time, Math.max(0.003, fAttack / 3));
+        freqParam.setTargetAtTime(fSustainHz1Tracked, time + fAttack, Math.max(0.003, fDecay / 3));
       }
       if (resParam) {
         resParam.cancelScheduledValues(time);
-        resParam.setValueAtTime(Math.min(4, params.filter1.resonance * 4), time);
+        resParam.setTargetAtTime(Math.min(4, params.filter1.resonance * 4), time, 0.003);
       }
     } else if (this.filter1 instanceof BiquadFilterNode) {
       this.filter1.frequency.cancelScheduledValues(time);
-      this.filter1.frequency.setValueAtTime(Math.max(20, trackedCutoff1), time);
-      this.filter1.frequency.linearRampToValueAtTime(filterPeak1, time + fAttack);
-      this.filter1.frequency.setTargetAtTime(fSustainHz1, time + fAttack, fDecay / 3);
+      this.filter1.frequency.setTargetAtTime(filterPeak1Tracked, time, Math.max(0.003, fAttack / 3));
+      this.filter1.frequency.setTargetAtTime(fSustainHz1Tracked, time + fAttack, Math.max(0.003, fDecay / 3));
       this.filter1.Q.value = params.filter1.resonance * 20;
     }
 
@@ -517,11 +516,11 @@ export class SubtractorEngine {
     const ampRelease = adsrTimeMap(params.ampEnv.release);
 
     this.vca!.gain.cancelScheduledValues(time);
-    this.vca!.gain.setValueAtTime(this.vca!.gain.value, time);
-    this.vca!.gain.linearRampToValueAtTime(params.volume * velocity, time + Math.max(0.003, ampAttack));
-    this.vca!.gain.setTargetAtTime(ampSustain, time + Math.max(0.003, ampAttack), ampDecay / 3);
-
-    // Schedule release
+    // Attack: ramp smoothly from wherever gain currently is to peak
+    this.vca!.gain.setTargetAtTime(params.volume * velocity, time, Math.max(0.003, ampAttack / 3));
+    // Decay: after attack settles, decay to sustain
+    this.vca!.gain.setTargetAtTime(ampSustain, time + ampAttack, Math.max(0.003, ampDecay / 3));
+    // Release: after step ends, fade to zero
     const stepDuration = 0.125;
     this.vca!.gain.setTargetAtTime(0, time + stepDuration, Math.max(0.003, ampRelease / 3));
 
