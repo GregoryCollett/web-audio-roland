@@ -16,8 +16,8 @@ export function BassSection({ selectedStep, onSelectStep, focused = false }: Bas
       <BassHeader />
       <BassKnobs />
       <BassStepGrid selectedStep={selectedStep} onSelectStep={onSelectStep} />
-      <BassStepEditor selectedStep={selectedStep} />
       <Playhead />
+      <BassStepEditor selectedStep={selectedStep} />
     </div>
   );
 }

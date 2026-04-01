@@ -22,8 +22,8 @@ export function SynthSection({ selectedStep, onSelectStep, focused }: SynthSecti
       <SynthAmpSection />
       <SynthLFOSection />
       <SynthStepGrid selectedStep={selectedStep} onSelectStep={onSelectStep} />
-      <SynthStepEditor selectedStep={selectedStep} />
       <Playhead />
+      <SynthStepEditor selectedStep={selectedStep} />
     </div>
   );
 }
