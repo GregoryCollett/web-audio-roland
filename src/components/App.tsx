@@ -13,6 +13,7 @@ import { MasterSection } from './master/MasterSection';
 import { BassSection } from './bass/BassSection';
 import { MixerPanel } from './mixer/MixerPanel';
 import { SynthSection } from './synth/SynthSection';
+import { SubtractorSection } from './subtractor/SubtractorSection';
 
 export function App() {
   const [initialized, setInitialized] = useState(false);
@@ -20,7 +21,8 @@ export function App() {
   const [selectedStep, setSelectedStep] = useState(0);
   const [bassSelectedStep, setBassSelectedStep] = useState(0);
   const [synthSelectedStep, setSynthSelectedStep] = useState(0);
-  const [focusPanel, setFocusPanel] = useState<'drum' | 'bass' | 'synth'>('drum');
+  const [subtractorSelectedStep, setSubtractorSelectedStep] = useState(0);
+  const [focusPanel, setFocusPanel] = useState<'drum' | 'bass' | 'synth' | 'subtractor'>('drum');
 
   useKeyboard({
     selectedInstrument,
@@ -33,6 +35,8 @@ export function App() {
     setBassSelectedStep,
     synthSelectedStep,
     setSynthSelectedStep,
+    subtractorSelectedStep,
+    setSubtractorSelectedStep,
   });
 
   return (
@@ -65,6 +69,13 @@ export function App() {
           selectedStep={synthSelectedStep}
           onSelectStep={setSynthSelectedStep}
           focused={focusPanel === 'synth'}
+        />
+      </div>
+      <div onClick={() => setFocusPanel('subtractor')}>
+        <SubtractorSection
+          selectedStep={subtractorSelectedStep}
+          onSelectStep={setSubtractorSelectedStep}
+          focused={focusPanel === 'subtractor'}
         />
       </div>
       <MixerPanel />

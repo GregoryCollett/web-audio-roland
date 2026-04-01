@@ -4,9 +4,11 @@ import { INSTRUMENT_IDS, NUM_STEPS } from '../engine/types';
 import { drumEngine } from './useDrum';
 import { bassEngine } from './useBass';
 import { synthEngine } from './useSynth';
+import { subtractorEngine } from './useSubtractor';
 import { transport } from './useTransport';
 import { NUM_BASS_STEPS } from '../engine/bass/bassTypes';
 import { NUM_SYNTH_STEPS } from '../engine/synth/synthTypes';
+import { NUM_SUBTRACTOR_STEPS } from '../engine/subtractor/subtractorTypes';
 
 // Key → instrument index mapping
 // 1-9 = first 9 instruments, 0 = 10th, - = 11th
@@ -20,12 +22,14 @@ interface KeyboardState {
   setSelectedInstrument: (id: InstrumentId) => void;
   selectedStep: number;
   setSelectedStep: (step: number) => void;
-  focusPanel: 'drum' | 'bass' | 'synth';
-  setFocusPanel: (panel: 'drum' | 'bass' | 'synth') => void;
+  focusPanel: 'drum' | 'bass' | 'synth' | 'subtractor';
+  setFocusPanel: (panel: 'drum' | 'bass' | 'synth' | 'subtractor') => void;
   bassSelectedStep: number;
   setBassSelectedStep: (step: number) => void;
   synthSelectedStep: number;
   setSynthSelectedStep: (step: number) => void;
+  subtractorSelectedStep: number;
+  setSubtractorSelectedStep: (step: number) => void;
 }
 
 export function useKeyboard(state: KeyboardState): void {
@@ -34,7 +38,16 @@ export function useKeyboard(state: KeyboardState): void {
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  // Track whether V key is held (velocity modifier for subtractor)
+  const vHeldRef = useRef(false);
+
   useEffect(() => {
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'v' || e.key === 'V') {
+        vHeldRef.current = false;
+      }
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle keys when typing in an input
       const target = e.target as HTMLElement;
@@ -53,6 +66,8 @@ export function useKeyboard(state: KeyboardState): void {
         setBassSelectedStep,
         synthSelectedStep,
         setSynthSelectedStep,
+        subtractorSelectedStep,
+        setSubtractorSelectedStep,
       } = stateRef.current;
       const metaOrCtrl = e.metaKey || e.ctrlKey;
 
@@ -61,11 +76,12 @@ export function useKeyboard(state: KeyboardState): void {
         return;
       }
 
-      // --- Tab: cycle focus panel drum → bass → synth → drum ---
+      // --- Tab: cycle focus panel drum → bass → synth → subtractor → drum ---
       if (e.key === 'Tab') {
         e.preventDefault();
         if (focusPanel === 'drum') setFocusPanel('bass');
         else if (focusPanel === 'bass') setFocusPanel('synth');
+        else if (focusPanel === 'synth') setFocusPanel('subtractor');
         else setFocusPanel('drum');
         return;
       }
@@ -237,6 +253,88 @@ export function useKeyboard(state: KeyboardState): void {
       }
 
       // ============================================================
+      // Subtractor panel keys
+      // ============================================================
+      if (focusPanel === 'subtractor') {
+        // Track V key held state
+        if (e.key === 'v' || e.key === 'V') {
+          vHeldRef.current = true;
+          e.preventDefault();
+          return;
+        }
+
+        // Left/Right: step navigation
+        if (!metaOrCtrl && e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setSubtractorSelectedStep((subtractorSelectedStep - 1 + NUM_SUBTRACTOR_STEPS) % NUM_SUBTRACTOR_STEPS);
+          return;
+        }
+        if (!metaOrCtrl && e.key === 'ArrowRight') {
+          e.preventDefault();
+          setSubtractorSelectedStep((subtractorSelectedStep + 1) % NUM_SUBTRACTOR_STEPS);
+          return;
+        }
+
+        // Up/Down: pitch semitone (or velocity if V held)
+        if (!metaOrCtrl && e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (vHeldRef.current) {
+            const snap = subtractorEngine.getSnapshot();
+            const currentVelocity = snap.pattern.steps[subtractorSelectedStep].velocity;
+            subtractorEngine.setVelocity(subtractorSelectedStep, Math.min(127, currentVelocity + 8));
+          } else {
+            const snap = subtractorEngine.getSnapshot();
+            const currentNote = snap.pattern.steps[subtractorSelectedStep].note;
+            subtractorEngine.setNote(subtractorSelectedStep, currentNote + 1);
+          }
+          return;
+        }
+        if (!metaOrCtrl && e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (vHeldRef.current) {
+            const snap = subtractorEngine.getSnapshot();
+            const currentVelocity = snap.pattern.steps[subtractorSelectedStep].velocity;
+            subtractorEngine.setVelocity(subtractorSelectedStep, Math.max(0, currentVelocity - 8));
+          } else {
+            const snap = subtractorEngine.getSnapshot();
+            const currentNote = snap.pattern.steps[subtractorSelectedStep].note;
+            subtractorEngine.setNote(subtractorSelectedStep, currentNote - 1);
+          }
+          return;
+        }
+
+        // s/S: toggle slide
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          subtractorEngine.toggleSlide(subtractorSelectedStep);
+          return;
+        }
+
+        // n/N: set gate to note
+        if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          subtractorEngine.setGate(subtractorSelectedStep, 'note');
+          return;
+        }
+
+        // r/R: set gate to rest
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          subtractorEngine.setGate(subtractorSelectedStep, 'rest');
+          return;
+        }
+
+        // t/T: set gate to tie
+        if (e.key === 't' || e.key === 'T') {
+          e.preventDefault();
+          subtractorEngine.setGate(subtractorSelectedStep, 'tie');
+          return;
+        }
+
+        return;
+      }
+
+      // ============================================================
       // Drum panel keys
       // ============================================================
 
@@ -292,6 +390,10 @@ export function useKeyboard(state: KeyboardState): void {
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
   }, []); // Single registration, never re-registers
 }

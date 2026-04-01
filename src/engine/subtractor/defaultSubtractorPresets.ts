@@ -8,7 +8,6 @@ import { createEmptyModMatrix } from './subtractorTypes';
 const C3  = 48;
 const D3  = 50;
 const Eb3 = 51;
-const E3  = 52;
 const F3  = 53;
 const G3  = 55;
 const Ab3 = 56;

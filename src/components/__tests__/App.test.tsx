@@ -64,8 +64,8 @@ describe('App', () => {
 
   it('shows Custom as default preset name', () => {
     render(<App />);
-    // Drum section: Pattern + Kit (2), Bass section: Pattern + Synth (2), Synth section: Pattern + Sound (2) = 6 total
+    // Drum section: Pattern + Kit (2), Bass section: Pattern + Synth (2), Synth section: Pattern + Sound (2), Subtractor section: Pattern + Sound (2) = 8 total
     const customLabels = screen.getAllByText('Custom');
-    expect(customLabels.length).toBe(6);
+    expect(customLabels.length).toBe(8);
   });
 });
