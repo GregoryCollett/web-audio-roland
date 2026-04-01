@@ -98,6 +98,8 @@ export class TransportManager {
     const base = import.meta.env.BASE_URL ?? '/';
     await this.ctx.audioWorklet.addModule(`${base}worklets/diode-ladder-processor.js`);
     await this.ctx.audioWorklet.addModule(`${base}worklets/ir3109-processor.js`);
+    await this.ctx.audioWorklet.addModule(`${base}worklets/subtractor-filter1-processor.js`);
+    await this.ctx.audioWorklet.addModule(`${base}worklets/subtractor-filter2-processor.js`);
 
     // Build master chain: mixer master → compressor → masterGain → destination
     this.compressorNode = this.ctx.createDynamicsCompressor();

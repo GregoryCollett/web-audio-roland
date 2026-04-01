@@ -1,5 +1,6 @@
 // Re-export shared utilities from synthTypes
-export { ADSRParams, midiToFreq, midiToName, adsrTimeMap } from '../synth/synthTypes';
+export type { ADSRParams } from '../synth/synthTypes';
+export { midiToFreq, midiToName, adsrTimeMap } from '../synth/synthTypes';
 import type { ADSRParams } from '../synth/synthTypes';
 import { DEFAULT_ADSR as SYNTH_DEFAULT_ADSR } from '../synth/synthTypes';
 

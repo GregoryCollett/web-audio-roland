@@ -25,5 +25,13 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "exclude": ["src/engine/bass/diodeLadderProcessor.ts", "src/engine/synth/ir3109Processor.ts", "src/engine/synth/__tests__/ir3109Processor.test.ts"]
+  "exclude": [
+    "src/engine/bass/diodeLadderProcessor.ts",
+    "src/engine/synth/ir3109Processor.ts",
+    "src/engine/synth/__tests__/ir3109Processor.test.ts",
+    "src/engine/subtractor/subtractorFilter1.ts",
+    "src/engine/subtractor/subtractorFilter2.ts",
+    "src/engine/subtractor/__tests__/subtractorFilter1.test.ts",
+    "src/engine/subtractor/__tests__/subtractorFilter2.test.ts"
+  ]
 }
