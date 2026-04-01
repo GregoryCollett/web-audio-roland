@@ -517,13 +517,13 @@ export class SubtractorEngine {
     const ampRelease = adsrTimeMap(params.ampEnv.release);
 
     this.vca!.gain.cancelScheduledValues(time);
-    this.vca!.gain.setValueAtTime(0, time);
-    this.vca!.gain.linearRampToValueAtTime(params.volume * velocity, time + ampAttack);
-    this.vca!.gain.setTargetAtTime(ampSustain, time + ampAttack, ampDecay / 3);
+    this.vca!.gain.setValueAtTime(this.vca!.gain.value, time);
+    this.vca!.gain.linearRampToValueAtTime(params.volume * velocity, time + Math.max(0.003, ampAttack));
+    this.vca!.gain.setTargetAtTime(ampSustain, time + Math.max(0.003, ampAttack), ampDecay / 3);
 
-    // Schedule release (approximate step duration at 120 BPM = 0.125s)
+    // Schedule release
     const stepDuration = 0.125;
-    this.vca!.gain.setTargetAtTime(0, time + stepDuration, ampRelease / 3);
+    this.vca!.gain.setTargetAtTime(0, time + stepDuration, Math.max(0.003, ampRelease / 3));
 
     this.prevNote = seqStep.note;
   }

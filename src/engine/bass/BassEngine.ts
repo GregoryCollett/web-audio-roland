@@ -224,9 +224,9 @@ export class BassEngine {
     const bassStep = this.snapshot.pattern.steps[step % NUM_BASS_STEPS];
 
     if (bassStep.gate === 'rest') {
-      // Silence
+      // Silence — ramp down over 3ms to avoid click
       this.vca.gain.cancelScheduledValues(time);
-      this.vca.gain.setValueAtTime(0, time);
+      this.vca.gain.setTargetAtTime(0, time, 0.003);
       this.prevStep = bassStep;
       return;
     }
@@ -281,10 +281,11 @@ export class BassEngine {
       this.filter.Q.value = synth.resonance * 20;
     }
 
-    // VCA envelope
+    // VCA envelope — use short ramp to avoid click
     const vcaLevel = synth.volume * (1 + accentBoost * 0.5);
     this.vca.gain.cancelScheduledValues(time);
-    this.vca.gain.setValueAtTime(vcaLevel, time);
+    this.vca.gain.setValueAtTime(this.vca.gain.value, time);
+    this.vca.gain.linearRampToValueAtTime(vcaLevel, time + 0.003);
     this.vca.gain.setTargetAtTime(0, time + 0.01, decayTime / 3);
 
     this.prevStep = bassStep;

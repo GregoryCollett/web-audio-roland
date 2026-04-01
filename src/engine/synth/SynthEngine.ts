@@ -465,13 +465,13 @@ export class SynthEngine {
     const aRelease = adsrTimeMap(params.ampEnv.release);
 
     this.vca!.gain.cancelScheduledValues(time);
-    this.vca!.gain.setValueAtTime(0, time);
-    this.vca!.gain.linearRampToValueAtTime(vcaLevel, time + aAttack);
-    this.vca!.gain.setTargetAtTime(aSustain, time + aAttack, aDecay / 3);
+    this.vca!.gain.setValueAtTime(this.vca!.gain.value, time);
+    this.vca!.gain.linearRampToValueAtTime(vcaLevel, time + Math.max(0.003, aAttack));
+    this.vca!.gain.setTargetAtTime(aSustain, time + Math.max(0.003, aAttack), aDecay / 3);
 
-    // Schedule release (approximate step length as ~0.125s at 120 BPM; use aRelease after)
+    // Schedule release
     const stepDuration = 0.125;
-    this.vca!.gain.setTargetAtTime(0, time + stepDuration, aRelease / 3);
+    this.vca!.gain.setTargetAtTime(0, time + stepDuration, Math.max(0.003, aRelease / 3));
 
     this.prevStep = synthStep;
   }
