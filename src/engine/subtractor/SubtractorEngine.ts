@@ -45,8 +45,8 @@ export class SubtractorEngine {
   private vca: GainNode | null = null;
   private lfo1: OscillatorNode | null = null;
   private lfo2: OscillatorNode | null = null;
-  private lfo1Gain: GainNode | null = null;
-  private lfo2Gain: GainNode | null = null;
+  // Per-destination mod gain nodes: lfo1/lfo2 each get one gain per destination
+  private modGains: Map<string, { lfo1: GainNode; lfo2: GainNode }> = new Map();
   private useFilter1Worklet = true;
   private useFilter2Worklet = true;
   private audioCtx: AudioContext | null = null;
@@ -586,19 +586,13 @@ export class SubtractorEngine {
     this.lfo1 = ctx.createOscillator();
     this.lfo1.type = p.lfo1.waveform === 'random' ? 'square'
       : p.lfo1.waveform as OscillatorType;
-    this.lfo1.frequency.value = 0.1 * Math.pow(200, p.lfo1.rate); // 0-1 → 0.1-20 Hz log
-    this.lfo1Gain = ctx.createGain();
-    this.lfo1Gain.gain.value = 0;
-    this.lfo1.connect(this.lfo1Gain);
+    this.lfo1.frequency.value = 0.1 * Math.pow(200, p.lfo1.rate);
 
     // --- LFO 2 ---
     this.lfo2 = ctx.createOscillator();
     this.lfo2.type = p.lfo2.waveform === 'random' ? 'square'
       : p.lfo2.waveform as OscillatorType;
     this.lfo2.frequency.value = 0.1 * Math.pow(200, p.lfo2.rate);
-    this.lfo2Gain = ctx.createGain();
-    this.lfo2Gain.gain.value = 0;
-    this.lfo2.connect(this.lfo2Gain);
 
     // --- Filter 1 ---
     try {
@@ -655,6 +649,49 @@ export class SubtractorEngine {
     this.filter2.connect(this.vca);
     this.vca.connect(dest);
 
+    // --- Permanent mod routing ---
+    // For each modulatable destination, create a pair of gain nodes
+    // (one for LFO1, one for LFO2) and wire them permanently.
+    // The gain value controls mod depth — set to 0 to disable.
+    const modDestinations: Array<{ key: string; param: AudioParam | null }> = [
+      { key: 'osc1Pitch', param: this.osc1.detune },
+      { key: 'osc2Pitch', param: this.osc2.detune },
+      { key: 'ampLevel', param: this.vca.gain },
+      { key: 'fmAmount', param: this.fmGain.gain },
+    ];
+
+    // Add filter params
+    if (this.filter1 instanceof AudioWorkletNode) {
+      modDestinations.push({ key: 'filter1Cutoff', param: this.filter1.parameters.get('frequency') ?? null });
+      modDestinations.push({ key: 'filter1Resonance', param: this.filter1.parameters.get('resonance') ?? null });
+    } else if (this.filter1 instanceof BiquadFilterNode) {
+      modDestinations.push({ key: 'filter1Cutoff', param: this.filter1.frequency });
+      modDestinations.push({ key: 'filter1Resonance', param: this.filter1.Q });
+    }
+    if (this.filter2 instanceof AudioWorkletNode) {
+      modDestinations.push({ key: 'filter2Cutoff', param: this.filter2.parameters.get('frequency') ?? null });
+    } else if (this.filter2 instanceof BiquadFilterNode) {
+      modDestinations.push({ key: 'filter2Cutoff', param: this.filter2.frequency });
+    }
+
+    modDestinations.push({ key: 'lfo1Rate', param: this.lfo1.frequency });
+    modDestinations.push({ key: 'lfo2Rate', param: this.lfo2.frequency });
+
+    for (const { key, param } of modDestinations) {
+      if (!param) continue;
+      const lfo1G = ctx.createGain();
+      lfo1G.gain.value = 0; // disabled by default
+      this.lfo1.connect(lfo1G);
+      lfo1G.connect(param);
+
+      const lfo2G = ctx.createGain();
+      lfo2G.gain.value = 0;
+      this.lfo2.connect(lfo2G);
+      lfo2G.connect(param);
+
+      this.modGains.set(key, { lfo1: lfo1G, lfo2: lfo2G });
+    }
+
     // Start all running nodes
     this.osc1.start();
     this.osc2.start();
@@ -667,97 +704,54 @@ export class SubtractorEngine {
   // Internal
   // ---------------------------------------------------------------------------
 
-  private applyModMatrix(params: SubtractorSnapshot['params'], velocity: number, time: number): void {
-    // Update LFO frequencies from current params
-    if (this.lfo1) this.lfo1.frequency.value = 0.1 * Math.pow(200, params.lfo1.rate);
-    if (this.lfo2) this.lfo2.frequency.value = 0.1 * Math.pow(200, params.lfo2.rate);
-
-    // Disconnect LFO gains from previous destinations
-    if (this.lfo1Gain) this.lfo1Gain.disconnect();
-    if (this.lfo2Gain) this.lfo2Gain.disconnect();
-    // Reconnect LFOs to their gain nodes
-    if (this.lfo1 && this.lfo1Gain) {
-      this.lfo1.disconnect();
-      this.lfo1.connect(this.lfo1Gain);
+  private applyModMatrix(params: SubtractorSnapshot['params'], _velocity: number, _time: number): void {
+    // Update LFO frequencies
+    if (this.lfo1) {
+      this.lfo1.frequency.value = 0.1 * Math.pow(200, params.lfo1.rate);
+      const wf = params.lfo1.waveform === 'random' ? 'square' : params.lfo1.waveform;
+      if (this.lfo1.type !== wf) this.lfo1.type = wf as OscillatorType;
     }
-    if (this.lfo2 && this.lfo2Gain) {
-      this.lfo2.disconnect();
-      this.lfo2.connect(this.lfo2Gain);
+    if (this.lfo2) {
+      this.lfo2.frequency.value = 0.1 * Math.pow(200, params.lfo2.rate);
+      const wf = params.lfo2.waveform === 'random' ? 'square' : params.lfo2.waveform;
+      if (this.lfo2.type !== wf) this.lfo2.type = wf as OscillatorType;
     }
 
+    // Zero all mod gain nodes first
+    for (const pair of this.modGains.values()) {
+      pair.lfo1.gain.value = 0;
+      pair.lfo2.gain.value = 0;
+    }
+
+    // Apply mod matrix: just set gain values on the permanent routing nodes
     for (const slot of params.modMatrix) {
       if (slot.source === 'none' || slot.amount === 0) continue;
 
-      const destParam = this.getModDestinationParam(slot.destination);
-      if (!destParam) continue;
+      const pair = this.modGains.get(slot.destination);
+      if (!pair) continue;
 
-      if (slot.source === 'lfo1' && this.lfo1Gain) {
-        // LFO modulation: connect LFO gain to destination AudioParam
-        this.lfo1Gain.gain.value = slot.amount * this.getModScale(slot.destination);
-        this.lfo1Gain.connect(destParam);
-      } else if (slot.source === 'lfo2' && this.lfo2Gain) {
-        this.lfo2Gain.gain.value = slot.amount * this.getModScale(slot.destination);
-        this.lfo2Gain.connect(destParam);
-      } else if (slot.source === 'velocity') {
-        // Velocity: one-time offset applied at note trigger
-        const offset = slot.amount * velocity * this.getModScale(slot.destination);
-        destParam.setValueAtTime(destParam.value + offset, time);
-      } else if (slot.source === 'modEnv') {
-        // Mod envelope: use setTargetAtTime for attack then decay
-        const modAttack = adsrTimeMap(params.modEnv.attack);
-        const modDecay = adsrTimeMap(params.modEnv.decay);
-        const modSustain = params.modEnv.sustain;
-        const scale = slot.amount * this.getModScale(slot.destination);
-        // Ramp up to peak then decay to sustain level
-        destParam.cancelScheduledValues(time);
-        destParam.setTargetAtTime(destParam.value + scale, time, Math.max(0.003, modAttack / 3));
-        destParam.setTargetAtTime(destParam.value + scale * modSustain, time + modAttack, Math.max(0.003, modDecay / 3));
-      }
-    }
-  }
+      const scale = this.getModScale(slot.destination);
 
-  private getModDestinationParam(dest: string): AudioParam | null {
-    switch (dest) {
-      case 'osc1Pitch': return this.osc1?.detune ?? null;
-      case 'osc2Pitch': return this.osc2?.detune ?? null;
-      case 'filter1Cutoff': {
-        if (this.filter1 instanceof AudioWorkletNode) return this.filter1.parameters.get('frequency') ?? null;
-        if (this.filter1 instanceof BiquadFilterNode) return this.filter1.frequency;
-        return null;
+      if (slot.source === 'lfo1') {
+        pair.lfo1.gain.value = slot.amount * scale;
+      } else if (slot.source === 'lfo2') {
+        pair.lfo2.gain.value = slot.amount * scale;
       }
-      case 'filter1Resonance': {
-        if (this.filter1 instanceof AudioWorkletNode) return this.filter1.parameters.get('resonance') ?? null;
-        if (this.filter1 instanceof BiquadFilterNode) return this.filter1.Q;
-        return null;
-      }
-      case 'filter2Cutoff': {
-        if (this.filter2 instanceof AudioWorkletNode) return this.filter2.parameters.get('frequency') ?? null;
-        if (this.filter2 instanceof BiquadFilterNode) return this.filter2.frequency;
-        return null;
-      }
-      case 'ampLevel': return this.vca?.gain ?? null;
-      case 'fmAmount': return this.fmGain?.gain ?? null;
-      case 'lfo1Rate': return this.lfo1?.frequency ?? null;
-      case 'lfo2Rate': return this.lfo2?.frequency ?? null;
-      case 'oscMix': return null; // handled differently — not a single AudioParam
-      case 'osc1PW': return null; // pulse width not exposed as AudioParam
-      case 'osc2PW': return null;
-      default: return null;
+      // velocity and modEnv are applied as one-time offsets in the main tick logic
     }
   }
 
   private getModScale(dest: string): number {
-    // Scale factors so mod amounts produce musically useful ranges
     switch (dest) {
       case 'osc1Pitch':
-      case 'osc2Pitch': return 1200; // ±1200 cents = ±1 octave at full amount
+      case 'osc2Pitch': return 1200;
       case 'filter1Cutoff':
-      case 'filter2Cutoff': return 5000; // ±5000 Hz
-      case 'filter1Resonance': return 2; // ±2
-      case 'ampLevel': return 0.5; // ±0.5
-      case 'fmAmount': return 200; // ±200 Hz FM depth
+      case 'filter2Cutoff': return 5000;
+      case 'filter1Resonance': return 2;
+      case 'ampLevel': return 0.5;
+      case 'fmAmount': return 200;
       case 'lfo1Rate':
-      case 'lfo2Rate': return 10; // ±10 Hz
+      case 'lfo2Rate': return 10;
       default: return 1;
     }
   }
