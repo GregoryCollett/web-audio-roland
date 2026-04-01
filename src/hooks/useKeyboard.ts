@@ -56,6 +56,11 @@ export function useKeyboard(state: KeyboardState): void {
       } = stateRef.current;
       const metaOrCtrl = e.metaKey || e.ctrlKey;
 
+      // Let browser handle all meta/ctrl shortcuts except our explicit ones (arrows)
+      if (metaOrCtrl && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') {
+        return;
+      }
+
       // --- Tab: cycle focus panel drum → bass → synth → drum ---
       if (e.key === 'Tab') {
         e.preventDefault();
