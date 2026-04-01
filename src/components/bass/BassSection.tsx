@@ -2,6 +2,7 @@ import { BassHeader } from './BassHeader';
 import { BassKnobs } from './BassKnobs';
 import { BassStepGrid } from './BassStepGrid';
 import { BassStepEditor } from './BassStepEditor';
+import { Playhead } from '../shared/Playhead';
 
 interface BassSectionProps {
   selectedStep: number;
@@ -16,6 +17,7 @@ export function BassSection({ selectedStep, onSelectStep, focused = false }: Bas
       <BassKnobs />
       <BassStepGrid selectedStep={selectedStep} onSelectStep={onSelectStep} />
       <BassStepEditor selectedStep={selectedStep} />
+      <Playhead />
     </div>
   );
 }

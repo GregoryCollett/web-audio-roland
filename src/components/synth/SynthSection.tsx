@@ -5,6 +5,7 @@ import { SynthAmpSection } from './SynthAmpSection';
 import { SynthLFOSection } from './SynthLFOSection';
 import { SynthStepGrid } from './SynthStepGrid';
 import { SynthStepEditor } from './SynthStepEditor';
+import { Playhead } from '../shared/Playhead';
 
 interface SynthSectionProps {
   selectedStep: number;
@@ -22,6 +23,7 @@ export function SynthSection({ selectedStep, onSelectStep, focused }: SynthSecti
       <SynthLFOSection />
       <SynthStepGrid selectedStep={selectedStep} onSelectStep={onSelectStep} />
       <SynthStepEditor selectedStep={selectedStep} />
+      <Playhead />
     </div>
   );
 }

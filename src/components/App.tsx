@@ -8,7 +8,7 @@ import { InstrumentSelector } from './drum/InstrumentSelector';
 import { ParamKnobs } from './drum/ParamKnobs';
 import { StepGrid } from './drum/StepGrid';
 import { AccentRow } from './drum/AccentRow';
-import { Playhead } from './drum/Playhead';
+import { Playhead } from './shared/Playhead';
 import { MasterSection } from './master/MasterSection';
 import { BassSection } from './bass/BassSection';
 import { MixerPanel } from './mixer/MixerPanel';
