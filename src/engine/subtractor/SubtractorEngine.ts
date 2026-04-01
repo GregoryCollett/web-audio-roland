@@ -47,6 +47,7 @@ export class SubtractorEngine {
   private lfo2: OscillatorNode | null = null;
   private useFilter1Worklet = true;
   private useFilter2Worklet = true;
+  private audioCtx: AudioContext | null = null;
 
   // Track previous step for slide/portamento logic
   private prevNote: number | null = null;
@@ -139,6 +140,23 @@ export class SubtractorEngine {
       },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+
+    // Apply waveform change to live oscillator
+    if (param === 'waveform') {
+      const oscNode = osc === 1 ? this.osc1 : this.osc2;
+      if (oscNode && this.audioCtx) {
+        this.applyWaveform(oscNode, value as number);
+      }
+    }
+  }
+
+  private applyWaveform(osc: OscillatorNode, waveformIndex: number): void {
+    if (waveformIndex <= 3) {
+      osc.type = NATIVE_TYPES[waveformIndex];
+    } else if (this.audioCtx) {
+      const wave = createWaveform(this.audioCtx, waveformIndex);
+      if (wave) osc.setPeriodicWave(wave);
+    }
   }
 
   setFilterParam(filter: 1 | 2, param: keyof FilterParams, value: number): void {
@@ -507,6 +525,7 @@ export class SubtractorEngine {
   // ---------------------------------------------------------------------------
 
   private initNodes(ctx: AudioContext, dest: AudioNode): void {
+    this.audioCtx = ctx;
     const p = this.snapshot.params;
 
     // --- Oscillator 1 ---

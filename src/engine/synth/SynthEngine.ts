@@ -122,6 +122,15 @@ export class SynthEngine {
       },
       presets: { ...this.snapshot.presets, activeSoundId: null },
     });
+
+    // Apply waveform change to live oscillator
+    if (param === 'waveform') {
+      const oscNode = osc === 1 ? this.osc1 : this.osc2;
+      if (oscNode) {
+        const wf = value as string;
+        oscNode.type = wf === 'pulse' ? 'square' : wf as OscillatorType;
+      }
+    }
   }
 
   setFilterParam(param: 'cutoff' | 'resonance' | 'filterEnvDepth', value: number): void {
