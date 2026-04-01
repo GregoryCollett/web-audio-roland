@@ -535,6 +535,13 @@ body {
   padding: 4px 0;
 }
 
+.master__preset-dropdown--up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
 .master__title {
   font-size: 10px;
   font-weight: 700;
@@ -681,6 +688,13 @@ body {
   max-height: 240px;
   overflow-y: auto;
   padding: 4px 0;
+}
+
+.preset-selector__dropdown--up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 4px;
 }
 
 .preset-selector__item {

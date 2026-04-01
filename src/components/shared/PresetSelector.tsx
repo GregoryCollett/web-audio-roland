@@ -18,6 +18,7 @@ export function PresetSelector({
   onDelete,
 }: PresetSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [saveName, setSaveName] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +53,11 @@ export function PresetSelector({
   }, [open]);
 
   function handleToggle() {
+    if (!open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setDropUp(spaceBelow < 260);
+    }
     setOpen((prev) => !prev);
     if (open) {
       setShowSaveForm(false);
@@ -102,7 +108,7 @@ export function PresetSelector({
       </button>
 
       {open && (
-        <div className="preset-selector__dropdown">
+        <div className={`preset-selector__dropdown${dropUp ? ' preset-selector__dropdown--up' : ''}`}>
           {builtIns.map((preset) => (
             <button
               key={preset.id}

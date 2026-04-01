@@ -46,6 +46,7 @@ function findMatchingPreset(master: { threshold: number; ratio: number; knee: nu
 export function MasterSection() {
   const master = useMaster();
   const [presetOpen, setPresetOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeName = findMatchingPreset(master) || 'Custom';
@@ -67,13 +68,19 @@ export function MasterSection() {
           <div className="master__preset-select" ref={dropdownRef}>
             <button
               className="master__preset-trigger"
-              onClick={() => setPresetOpen(!presetOpen)}
+              onClick={() => {
+                if (!presetOpen && dropdownRef.current) {
+                  const rect = dropdownRef.current.getBoundingClientRect();
+                  setDropUp(window.innerHeight - rect.bottom < 260);
+                }
+                setPresetOpen(!presetOpen);
+              }}
             >
               <span>{activeName}</span>
               <span className="preset-selector__arrow">{presetOpen ? '\u25B2' : '\u25BC'}</span>
             </button>
             {presetOpen && (
-              <div className="master__preset-dropdown">
+              <div className={`master__preset-dropdown${dropUp ? ' master__preset-dropdown--up' : ''}`}>
                 {COMP_PRESETS.map((p) => (
                   <button
                     key={p.name}
