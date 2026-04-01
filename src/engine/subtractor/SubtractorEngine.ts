@@ -496,7 +496,7 @@ export class SubtractorEngine {
       const freqParam = this.filter2.parameters.get('frequency');
       const resParam  = this.filter2.parameters.get('resonance');
       if (freqParam) freqParam.setValueAtTime(trackedCutoff2, time);
-      if (resParam)  resParam.setValueAtTime(params.filter2.resonance * 4, time);
+      if (resParam)  resParam.setValueAtTime(params.filter2.resonance * 2, time);
     } else if (this.filter2 instanceof BiquadFilterNode) {
       this.filter2.frequency.setValueAtTime(trackedCutoff2, time);
       this.filter2.Q.value = params.filter2.resonance * 20;
