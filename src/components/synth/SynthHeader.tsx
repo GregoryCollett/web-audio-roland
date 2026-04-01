@@ -7,7 +7,7 @@ export function SynthHeader() {
   return (
     <div className="synth-header">
       <div className="synth-header__title-row">
-        <span className="synth-header__title">SH-2</span>
+        <span className="synth-header__title">GC-2</span>
         <span className="synth-header__subtitle">SYNTHESIZER</span>
       </div>
       <div className="synth-header__controls">

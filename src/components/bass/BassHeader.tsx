@@ -8,7 +8,7 @@ export function BassHeader() {
   return (
     <div className="bass-header">
       <div className="bass-header__title-row">
-        <span className="bass-header__title">TB-303</span>
+        <span className="bass-header__title">GC-303</span>
         <span className="bass-header__subtitle">BASS LINE</span>
       </div>
       <div className="bass-header__controls">

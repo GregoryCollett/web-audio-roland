@@ -54,7 +54,7 @@ export class SynthEngine {
       },
     };
 
-    mixer.assignChannel(SYNTH_MIXER_CHANNEL, 'SH-2');
+    mixer.assignChannel(SYNTH_MIXER_CHANNEL, 'GC-2');
 
     transport.registerTickCallback((ctx, time, step) =>
       this.onTick(ctx, time, step),

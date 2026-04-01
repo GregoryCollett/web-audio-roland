@@ -7,7 +7,7 @@ export function DrumHeader() {
   return (
     <div className="tr909__header">
       <div className="tr909__title-row">
-        <span className="tr909__title">TR-909</span>
+        <span className="tr909__title">GC-909</span>
         <span className="tr909__subtitle">RHYTHM COMPOSER</span>
       </div>
       <div className="tr909__header-controls">

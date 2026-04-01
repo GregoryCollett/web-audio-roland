@@ -34,7 +34,7 @@ export class DrumEngine {
       },
     };
 
-    mixer.assignChannel(DRUM_MIXER_CHANNEL, 'TR-909');
+    mixer.assignChannel(DRUM_MIXER_CHANNEL, 'GC-909');
 
     transport.registerTickCallback((ctx, time, step) =>
       this.onTick(ctx, time, step),

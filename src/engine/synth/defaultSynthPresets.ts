@@ -155,7 +155,7 @@ export const DEFAULT_SYNTH_PATTERN_PRESETS: SynthPatternPreset[] = [
 export const DEFAULT_SYNTH_SOUND_PRESETS: SynthSoundPreset[] = [
   {
     id: 'builtin-synth-classic-sh2',
-    name: 'Classic SH-2',
+    name: 'Classic GC-2',
     builtIn: true,
     params: {
       osc1: { waveform: 'sawtooth', octave: 0,  tune: 0,   pulseWidth: 0.5, level: 0.8 },

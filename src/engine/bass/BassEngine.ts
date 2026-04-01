@@ -33,7 +33,7 @@ export class BassEngine {
       },
     };
 
-    mixer.assignChannel(BASS_MIXER_CHANNEL, 'TB-303');
+    mixer.assignChannel(BASS_MIXER_CHANNEL, 'GC-303');
 
     transport.registerTickCallback((ctx, time, step) =>
       this.onTick(ctx, time, step),
