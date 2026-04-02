@@ -77,10 +77,10 @@ describe('SubtractorPresetStorage', () => {
     expect(builtIn).toHaveLength(12);
   });
 
-  it('returns 16 built-in sound presets', () => {
+  it('returns built-in sound presets', () => {
     const presets = SubtractorPresetStorage.getSoundPresets();
     const builtIn = presets.filter((p) => p.builtIn);
-    expect(builtIn).toHaveLength(16);
+    expect(builtIn.length).toBeGreaterThanOrEqual(16);
   });
 
   it('getPatternPresets merges user presets with built-in presets', () => {

@@ -18,7 +18,9 @@
       "Bash(git push:*)",
       "Bash(npx vite:*)",
       "Bash(grep:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Read(//private/tmp/**)",
+      "Read(//tmp/**)"
     ]
   }
 }
