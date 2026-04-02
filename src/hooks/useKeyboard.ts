@@ -38,7 +38,7 @@ export function useKeyboard(state: KeyboardState): void {
   // Use refs so the listener closure always sees current values
   // without needing to re-register on every state change
   const stateRef = useRef(state);
-  stateRef.current = state;
+  useEffect(() => { stateRef.current = state; });
 
   // Track whether V key is held (velocity modifier for subtractor)
   const vHeldRef = useRef(false);
