@@ -15,6 +15,8 @@ import { MixerPanel } from './mixer/MixerPanel';
 import { SynthSection } from './synth/SynthSection';
 import { SubtractorSection } from './subtractor/SubtractorSection';
 
+type ModuleId = 'drum' | 'bass' | 'synth' | 'subtractor' | 'mixer' | 'master';
+
 export function App() {
   const [initialized, setInitialized] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId>('kick');
@@ -22,15 +24,19 @@ export function App() {
   const [bassSelectedStep, setBassSelectedStep] = useState(0);
   const [synthSelectedStep, setSynthSelectedStep] = useState(0);
   const [subtractorSelectedStep, setSubtractorSelectedStep] = useState(0);
-  const [focusPanel, setFocusPanel] = useState<'drum' | 'bass' | 'synth' | 'subtractor'>('drum');
+  const [expandedModule, setExpandedModule] = useState<ModuleId>('drum');
+
+  const toggleModule = (id: ModuleId) => {
+    setExpandedModule(prev => prev === id ? prev : id);
+  };
 
   useKeyboard({
     selectedInstrument,
     setSelectedInstrument,
     selectedStep,
     setSelectedStep,
-    focusPanel,
-    setFocusPanel,
+    expandedModule,
+    setExpandedModule,
     bassSelectedStep,
     setBassSelectedStep,
     synthSelectedStep,
@@ -43,43 +49,46 @@ export function App() {
     <>
       {!initialized && <InitOverlay onInit={() => setInitialized(true)} />}
       <Transport />
-      <div
-        className={`tr909${focusPanel === 'drum' ? ' tr909--focused' : ''}`}
-        onClick={() => setFocusPanel('drum')}
-      >
-        <DrumHeader />
-        <InstrumentSelector
-          selected={selectedInstrument}
-          onSelect={setSelectedInstrument}
-        />
-        <ParamKnobs instrument={selectedInstrument} />
-        <StepGrid instrument={selectedInstrument} selectedStep={selectedStep} />
-        <AccentRow selectedStep={selectedStep} />
-        <Playhead />
+      <div className="module-panel module--909">
+        <div className="module-panel__header" onClick={() => toggleModule('drum')}>
+          <span className={`module-panel__arrow${expandedModule === 'drum' ? ' module-panel__arrow--open' : ''}`}>▶</span>
+          <span className="module-panel__title">GC-909</span>
+          <span className="module-panel__subtitle">RHYTHM COMPOSER</span>
+        </div>
+        {expandedModule === 'drum' && (
+          <div className="module-panel__content">
+            <DrumHeader />
+            <InstrumentSelector
+              selected={selectedInstrument}
+              onSelect={setSelectedInstrument}
+            />
+            <ParamKnobs instrument={selectedInstrument} />
+            <StepGrid instrument={selectedInstrument} selectedStep={selectedStep} />
+            <AccentRow selectedStep={selectedStep} />
+            <Playhead />
+          </div>
+        )}
       </div>
-      <div onClick={() => setFocusPanel('bass')}>
-        <BassSection
-          selectedStep={bassSelectedStep}
-          onSelectStep={setBassSelectedStep}
-          focused={focusPanel === 'bass'}
-        />
-      </div>
-      <div onClick={() => setFocusPanel('synth')}>
-        <SynthSection
-          selectedStep={synthSelectedStep}
-          onSelectStep={setSynthSelectedStep}
-          focused={focusPanel === 'synth'}
-        />
-      </div>
-      <div onClick={() => setFocusPanel('subtractor')}>
-        <SubtractorSection
-          selectedStep={subtractorSelectedStep}
-          onSelectStep={setSubtractorSelectedStep}
-          focused={focusPanel === 'subtractor'}
-        />
-      </div>
-      <MixerPanel />
-      <MasterSection />
+      <BassSection
+        selectedStep={bassSelectedStep}
+        onSelectStep={setBassSelectedStep}
+        expanded={expandedModule === 'bass'}
+        onToggle={() => toggleModule('bass')}
+      />
+      <SynthSection
+        selectedStep={synthSelectedStep}
+        onSelectStep={setSynthSelectedStep}
+        expanded={expandedModule === 'synth'}
+        onToggle={() => toggleModule('synth')}
+      />
+      <SubtractorSection
+        selectedStep={subtractorSelectedStep}
+        onSelectStep={setSubtractorSelectedStep}
+        expanded={expandedModule === 'subtractor'}
+        onToggle={() => toggleModule('subtractor')}
+      />
+      <MixerPanel expanded={expandedModule === 'mixer'} onToggle={() => toggleModule('mixer')} />
+      <MasterSection expanded={expandedModule === 'master'} onToggle={() => toggleModule('master')} />
     </>
   );
 }

@@ -43,7 +43,12 @@ function findMatchingPreset(master: { threshold: number; ratio: number; knee: nu
   return '';
 }
 
-export function MasterSection() {
+interface MasterSectionProps {
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+export function MasterSection({ expanded, onToggle }: MasterSectionProps) {
   const master = useMaster();
   const [presetOpen, setPresetOpen] = useState(false);
   const [dropUp, setDropUp] = useState(false);
@@ -61,96 +66,101 @@ export function MasterSection() {
   };
 
   return (
-    <div className="master">
-      <div className="master__header">
-        <span className="master__title">MASTER</span>
-        <div className="master__header-controls">
-          <div className="master__preset-select" ref={dropdownRef}>
+    <div className="module-panel module--master">
+      <div className="module-panel__header" onClick={onToggle}>
+        <span className={`module-panel__arrow${expanded ? ' module-panel__arrow--open' : ''}`}>▶</span>
+        <span className="module-panel__title">MASTER</span>
+      </div>
+      {expanded && (
+        <div className="module-panel__content">
+          <div className="master__header-controls">
+            <div className="master__preset-select" ref={dropdownRef}>
+              <button
+                className="master__preset-trigger"
+                onClick={() => {
+                  if (!presetOpen && dropdownRef.current) {
+                    const rect = dropdownRef.current.getBoundingClientRect();
+                    setDropUp(window.innerHeight - rect.bottom < 260);
+                  }
+                  setPresetOpen(!presetOpen);
+                }}
+              >
+                <span>{activeName}</span>
+                <span className="preset-selector__arrow">{presetOpen ? '\u25B2' : '\u25BC'}</span>
+              </button>
+              {presetOpen && (
+                <div className={`master__preset-dropdown${dropUp ? ' master__preset-dropdown--up' : ''}`}>
+                  {COMP_PRESETS.map((p) => (
+                    <button
+                      key={p.name}
+                      className={`preset-selector__item${p.name === activeName ? ' preset-selector__item--active' : ''}`}
+                      onClick={() => loadPreset(p)}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
-              className="master__preset-trigger"
-              onClick={() => {
-                if (!presetOpen && dropdownRef.current) {
-                  const rect = dropdownRef.current.getBoundingClientRect();
-                  setDropUp(window.innerHeight - rect.bottom < 260);
-                }
-                setPresetOpen(!presetOpen);
-              }}
+              className={`master__comp-toggle${master.compressor ? ' master__comp-toggle--active' : ''}`}
+              onClick={() => transport.setCompressorEnabled(!master.compressor)}
             >
-              <span>{activeName}</span>
-              <span className="preset-selector__arrow">{presetOpen ? '\u25B2' : '\u25BC'}</span>
+              {master.compressor ? 'ON' : 'OFF'}
             </button>
-            {presetOpen && (
-              <div className={`master__preset-dropdown${dropUp ? ' master__preset-dropdown--up' : ''}`}>
-                {COMP_PRESETS.map((p) => (
-                  <button
-                    key={p.name}
-                    className={`preset-selector__item${p.name === activeName ? ' preset-selector__item--active' : ''}`}
-                    onClick={() => loadPreset(p)}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
-          <button
-            className={`master__comp-toggle${master.compressor ? ' master__comp-toggle--active' : ''}`}
-            onClick={() => transport.setCompressorEnabled(!master.compressor)}
-          >
-            {master.compressor ? 'ON' : 'OFF'}
-          </button>
+          <div className="master__knobs">
+            <Knob
+              label="Volume"
+              value={master.volume}
+              min={0}
+              max={1}
+              displayValue={`${Math.round(master.volume * 100)}%`}
+              onChange={(v) => transport.setMasterVolume(v)}
+            />
+            <Knob
+              label="Thresh"
+              value={master.threshold}
+              min={-60}
+              max={0}
+              displayValue={`${Math.round(master.threshold)}dB`}
+              onChange={(v) => transport.setCompressorParam('threshold', v)}
+            />
+            <Knob
+              label="Ratio"
+              value={master.ratio}
+              min={1}
+              max={20}
+              displayValue={`${master.ratio.toFixed(1)}:1`}
+              onChange={(v) => transport.setCompressorParam('ratio', v)}
+            />
+            <Knob
+              label="Knee"
+              value={master.knee}
+              min={0}
+              max={40}
+              displayValue={`${Math.round(master.knee)}dB`}
+              onChange={(v) => transport.setCompressorParam('knee', v)}
+            />
+            <Knob
+              label="Attack"
+              value={master.attack}
+              min={0}
+              max={1}
+              displayValue={`${Math.round(master.attack * 1000)}ms`}
+              onChange={(v) => transport.setCompressorParam('attack', v)}
+            />
+            <Knob
+              label="Release"
+              value={master.release}
+              min={0}
+              max={1}
+              displayValue={`${Math.round(master.release * 1000)}ms`}
+              onChange={(v) => transport.setCompressorParam('release', v)}
+            />
+          </div>
         </div>
-      </div>
-      <div className="master__knobs">
-        <Knob
-          label="Volume"
-          value={master.volume}
-          min={0}
-          max={1}
-          displayValue={`${Math.round(master.volume * 100)}%`}
-          onChange={(v) => transport.setMasterVolume(v)}
-        />
-        <Knob
-          label="Thresh"
-          value={master.threshold}
-          min={-60}
-          max={0}
-          displayValue={`${Math.round(master.threshold)}dB`}
-          onChange={(v) => transport.setCompressorParam('threshold', v)}
-        />
-        <Knob
-          label="Ratio"
-          value={master.ratio}
-          min={1}
-          max={20}
-          displayValue={`${master.ratio.toFixed(1)}:1`}
-          onChange={(v) => transport.setCompressorParam('ratio', v)}
-        />
-        <Knob
-          label="Knee"
-          value={master.knee}
-          min={0}
-          max={40}
-          displayValue={`${Math.round(master.knee)}dB`}
-          onChange={(v) => transport.setCompressorParam('knee', v)}
-        />
-        <Knob
-          label="Attack"
-          value={master.attack}
-          min={0}
-          max={1}
-          displayValue={`${Math.round(master.attack * 1000)}ms`}
-          onChange={(v) => transport.setCompressorParam('attack', v)}
-        />
-        <Knob
-          label="Release"
-          value={master.release}
-          min={0}
-          max={1}
-          displayValue={`${Math.round(master.release * 1000)}ms`}
-          onChange={(v) => transport.setCompressorParam('release', v)}
-        />
-      </div>
+      )}
     </div>
   );
 }

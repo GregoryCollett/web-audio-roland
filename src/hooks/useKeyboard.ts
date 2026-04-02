@@ -17,13 +17,15 @@ const KEY_TO_INSTRUMENT_INDEX: Record<string, number> = {
   '6': 5, '7': 6, '8': 7, '9': 8, '0': 9, '-': 10,
 };
 
+type ModuleId = 'drum' | 'bass' | 'synth' | 'subtractor' | 'mixer' | 'master';
+
 interface KeyboardState {
   selectedInstrument: InstrumentId;
   setSelectedInstrument: (id: InstrumentId) => void;
   selectedStep: number;
   setSelectedStep: (step: number) => void;
-  focusPanel: 'drum' | 'bass' | 'synth' | 'subtractor';
-  setFocusPanel: (panel: 'drum' | 'bass' | 'synth' | 'subtractor') => void;
+  expandedModule: ModuleId;
+  setExpandedModule: (id: ModuleId) => void;
   bassSelectedStep: number;
   setBassSelectedStep: (step: number) => void;
   synthSelectedStep: number;
@@ -60,8 +62,8 @@ export function useKeyboard(state: KeyboardState): void {
         setSelectedInstrument,
         selectedStep,
         setSelectedStep,
-        focusPanel,
-        setFocusPanel,
+        expandedModule,
+        setExpandedModule,
         bassSelectedStep,
         setBassSelectedStep,
         synthSelectedStep,
@@ -79,10 +81,10 @@ export function useKeyboard(state: KeyboardState): void {
       // --- Tab: cycle focus panel drum → bass → synth → subtractor → drum ---
       if (e.key === 'Tab') {
         e.preventDefault();
-        if (focusPanel === 'drum') setFocusPanel('bass');
-        else if (focusPanel === 'bass') setFocusPanel('synth');
-        else if (focusPanel === 'synth') setFocusPanel('subtractor');
-        else setFocusPanel('drum');
+        if (expandedModule === 'drum') setExpandedModule('bass');
+        else if (expandedModule === 'bass') setExpandedModule('synth');
+        else if (expandedModule === 'synth') setExpandedModule('subtractor');
+        else setExpandedModule('drum');
         return;
       }
 
@@ -115,7 +117,7 @@ export function useKeyboard(state: KeyboardState): void {
       // ============================================================
       // Bass panel keys
       // ============================================================
-      if (focusPanel === 'bass') {
+      if (expandedModule === 'bass') {
         // Left/Right: bass step navigation
         if (!metaOrCtrl && e.key === 'ArrowLeft') {
           e.preventDefault();
@@ -185,7 +187,7 @@ export function useKeyboard(state: KeyboardState): void {
       // ============================================================
       // Synth panel keys
       // ============================================================
-      if (focusPanel === 'synth') {
+      if (expandedModule === 'synth') {
         // Left/Right: synth step navigation
         if (!metaOrCtrl && e.key === 'ArrowLeft') {
           e.preventDefault();
@@ -255,7 +257,7 @@ export function useKeyboard(state: KeyboardState): void {
       // ============================================================
       // Subtractor panel keys
       // ============================================================
-      if (focusPanel === 'subtractor') {
+      if (expandedModule === 'subtractor') {
         // Track V key held state
         if (e.key === 'v' || e.key === 'V') {
           vHeldRef.current = true;

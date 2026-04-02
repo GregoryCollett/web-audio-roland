@@ -64,24 +64,34 @@ function Channel({ index, channel }: { index: number; channel: ChannelState }) {
 
 // --- MixerPanel ---
 
-export function MixerPanel() {
+interface MixerPanelProps {
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+export function MixerPanel({ expanded, onToggle }: MixerPanelProps) {
   const mixerState = useMixer();
 
   return (
-    <div className="mixer">
-      <div className="mixer__header">
-        <span className="mixer__title">MIXER</span>
+    <div className="module-panel module--mixer">
+      <div className="module-panel__header" onClick={onToggle}>
+        <span className={`module-panel__arrow${expanded ? ' module-panel__arrow--open' : ''}`}>▶</span>
+        <span className="module-panel__title">MIXER</span>
       </div>
-      <div className="mixer__channels">
-        {mixerState.channels.map((ch, i) => (
-          <Channel key={i} index={i} channel={ch} />
-        ))}
-        <div className="mixer__master-channel">
-          <span className="mixer__channel-label">MST</span>
-          <Fader value={mixerState.masterVolume} onChange={(v) => mixer.setMasterVolume(v)} />
-          <span className="mixer__channel-db">{Math.round(mixerState.masterVolume * 100)}%</span>
+      {expanded && (
+        <div className="module-panel__content">
+          <div className="mixer__channels">
+            {mixerState.channels.map((ch, i) => (
+              <Channel key={i} index={i} channel={ch} />
+            ))}
+            <div className="mixer__master-channel">
+              <span className="mixer__channel-label">MST</span>
+              <Fader value={mixerState.masterVolume} onChange={(v) => mixer.setMasterVolume(v)} />
+              <span className="mixer__channel-db">{Math.round(mixerState.masterVolume * 100)}%</span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
