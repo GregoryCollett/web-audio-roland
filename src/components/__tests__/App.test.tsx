@@ -6,7 +6,7 @@ import { App } from '../App';
 describe('App', () => {
   it('renders init overlay on first load', () => {
     render(<App />);
-    expect(screen.getByText('Start')).toBeDefined();
+    expect(screen.getByText('Click anywhere to start')).toBeDefined();
   });
 
   it('renders transport controls', () => {
